@@ -59,20 +59,33 @@ export default function SeatingPlannerPage() {
           large: { cell: "px-4 py-2.5", name: "px-4 py-3" },
         };
 
+    const widths = compactMode
+      ? {
+          small: "w-20 max-w-20 min-w-20",
+          medium: "w-28 max-w-28 min-w-28",
+          large: "w-36 max-w-36 min-w-36",
+        }
+      : {
+          small: "w-24 max-w-24 min-w-24",
+          medium: "w-32 max-w-32 min-w-32",
+          large: "w-40 max-w-40 min-w-40",
+        };
+
     const map = {
       small: {
-        cell: cn("w-24 max-w-24 min-w-24 text-xs", padding.small.cell),
-        name: cn("w-24 max-w-24 min-w-24 text-xs", padding.small.name),
+        cell: cn(widths.small, "text-xs", padding.small.cell),
+        name: cn(widths.small, "text-xs", padding.small.name),
       },
       medium: {
-        cell: cn("w-32 max-w-32 min-w-32 text-sm", padding.medium.cell),
-        name: cn("w-32 max-w-32 min-w-32 text-sm", padding.medium.name),
+        cell: cn(widths.medium, "text-sm", padding.medium.cell),
+        name: cn(widths.medium, "text-sm", padding.medium.name),
       },
       large: {
-        cell: cn("w-40 max-w-40 min-w-40 text-sm", padding.large.cell),
-        name: cn("w-40 max-w-40 min-w-40 text-sm", padding.large.name),
+        cell: cn(widths.large, "text-sm", padding.large.cell),
+        name: cn(widths.large, "text-sm", padding.large.name),
       },
     } as const;
+
     return map[cellSize];
   }, [cellSize, compactMode]);
 
