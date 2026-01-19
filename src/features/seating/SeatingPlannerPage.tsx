@@ -90,6 +90,7 @@ export default function SeatingPlannerPage() {
         cacheBust: true,
         pixelRatio: 2,
         backgroundColor: "hsl(var(--background))",
+        skipFonts: true,
       });
 
       const a = document.createElement("a");
@@ -117,6 +118,7 @@ export default function SeatingPlannerPage() {
         cacheBust: true,
         pixelRatio: 2,
         backgroundColor: "hsl(var(--background))",
+        skipFonts: true,
       });
 
       const pdf = new jsPDF({
