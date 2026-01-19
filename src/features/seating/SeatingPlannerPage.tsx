@@ -1,4 +1,5 @@
 import * as React from "react";
+import { toPng } from "html-to-image";
 import { Armchair, Download, Pencil, Plus, Trash2, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,8 @@ export default function SeatingPlannerPage() {
   const { guests, loading, addGuest, updateGuest, deleteGuest } = useGuests();
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [title, setTitle] = React.useState("Seating Plan");
+  const [exporting, setExporting] = React.useState(false);
+  const planRef = React.useRef<HTMLDivElement | null>(null);
 
   const editingGuest = React.useMemo(
     () => (editingId ? guests.find((g) => g.id === editingId) ?? null : null),
@@ -73,6 +76,29 @@ export default function SeatingPlannerPage() {
     guests.forEach((g) => map.set(g.name, g));
     return map;
   }, [guests]);
+
+  const handleSaveAsImage = async () => {
+    if (!planRef.current) return;
+
+    try {
+      setExporting(true);
+      const dataUrl = await toPng(planRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: "hsl(var(--background))",
+      });
+
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `${(title || "Seating Plan").trim().replace(/\s+/g, " ")}.png`;
+      a.click();
+    } catch (e) {
+      console.error("Failed to export image", e);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const upsertGuest = async (payload: Omit<Guest, "id">) => {
     try {
       if (!editingId) {
@@ -400,14 +426,18 @@ export default function SeatingPlannerPage() {
                   <Input id="planTitle" value={title} onChange={(e) => setTitle(e.target.value)} />
                 </div>
 
-                <Button variant="outline" disabled title="Image export can be re-enabled next">
-                  <Download /> Save as image
+                <Button variant="outline" onClick={handleSaveAsImage} disabled={!!error || exporting}>
+                  <Download /> {exporting ? "Saving..." : "Save as image"}
                 </Button>
               </div>
 
               <Separator />
 
-              <div className="overflow-x-auto rounded-lg border bg-card p-5" aria-label="Seating plan preview">
+              <div
+                ref={planRef}
+                className="overflow-x-auto rounded-lg border bg-card p-5"
+                aria-label="Seating plan preview"
+              >
                 <h2 className="mb-4 text-center text-lg font-semibold">{title || "Seating Plan"}</h2>
 
                 {error ? (
@@ -417,13 +447,6 @@ export default function SeatingPlannerPage() {
                 ) : (
                   <table className="mx-auto border-collapse text-sm">
                     <tbody>
-                      <tr>
-                        {arrangement.map((_, i) => (
-                          <td key={i} className="border px-3 py-2 text-center">
-                            {chiefIndex === i ? <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" /> : ""}
-                          </td>
-                        ))}
-                      </tr>
                       <tr>
                         {arrangement.map((seatName, i) => {
                           const baseName = seatName.startsWith("Spouse of ") ? seatName.slice("Spouse of ".length) : seatName;
@@ -438,11 +461,20 @@ export default function SeatingPlannerPage() {
                         })}
                       </tr>
                       <tr>
-                        {serialNumbers.map((n, i) => (
-                          <td key={i} className="border px-3 py-2 text-center tabular-nums">
-                            {n === 0 ? "" : n}
-                          </td>
-                        ))}
+                        {serialNumbers.map((n, i) => {
+                          const isChief = chiefIndex === i;
+                          return (
+                            <td key={i} className="border px-3 py-2 text-center tabular-nums">
+                              {isChief ? (
+                                <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
+                              ) : n === 0 ? (
+                                ""
+                              ) : (
+                                n
+                              )}
+                            </td>
+                          );
+                        })}
                       </tr>
                       <tr>
                         {arrangement.map((name, i) => (
