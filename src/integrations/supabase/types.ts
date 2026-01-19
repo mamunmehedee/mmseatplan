@@ -23,6 +23,7 @@ export type Database = {
           gradation_no: number | null
           id: string
           name: string
+          project_id: string | null
           reference_id: string | null
           role: string
           spouse_position: string
@@ -36,6 +37,7 @@ export type Database = {
           gradation_no?: number | null
           id?: string
           name: string
+          project_id?: string | null
           reference_id?: string | null
           role: string
           spouse_position?: string
@@ -49,12 +51,20 @@ export type Database = {
           gradation_no?: number | null
           id?: string
           name?: string
+          project_id?: string | null
           reference_id?: string | null
           role?: string
           spouse_position?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "guests_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "seating_projects"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "guests_reference_id_fkey"
             columns: ["reference_id"]
@@ -63,6 +73,63 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      seating_projects: {
+        Row: {
+          cell_size: string
+          compact_mode: boolean
+          created_at: string
+          id: string
+          name: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cell_size?: string
+          compact_mode?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cell_size?: string
+          compact_mode?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
