@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useGuests } from "@/hooks/use-guests";
 
@@ -41,17 +42,39 @@ export default function SeatingPlannerPage() {
   const [pdfPaper, setPdfPaper] = React.useState<"a4" | "letter">("a4");
   const [pdfMargin, setPdfMargin] = React.useState<"none" | "small" | "normal" | "large">("normal");
   const [cellSize, setCellSize] = React.useState<"small" | "medium" | "large">("medium");
+  const [compactMode, setCompactMode] = React.useState(false);
 
   const planExportRef = React.useRef<HTMLDivElement | null>(null);
 
   const cellSizeClass = React.useMemo(() => {
+    const padding = compactMode
+      ? {
+          small: { cell: "px-1 py-0.5", name: "px-1 py-0.5" },
+          medium: { cell: "px-1 py-0.5", name: "px-1 py-0.5" },
+          large: { cell: "px-1.5 py-1", name: "px-1.5 py-1" },
+        }
+      : {
+          small: { cell: "px-2 py-1.5", name: "px-2 py-2" },
+          medium: { cell: "px-3 py-2", name: "px-3 py-2.5" },
+          large: { cell: "px-4 py-2.5", name: "px-4 py-3" },
+        };
+
     const map = {
-      small: { cell: "w-24 max-w-24 min-w-24 px-1 py-1 text-xs", name: "w-24 max-w-24 min-w-24 px-1 py-1 text-xs" },
-      medium: { cell: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm", name: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm" },
-      large: { cell: "w-40 max-w-40 min-w-40 px-2 py-1.5 text-sm", name: "w-40 max-w-40 min-w-40 px-2 py-1.5 text-sm" },
+      small: {
+        cell: cn("w-24 max-w-24 min-w-24 text-xs", padding.small.cell),
+        name: cn("w-24 max-w-24 min-w-24 text-xs", padding.small.name),
+      },
+      medium: {
+        cell: cn("w-32 max-w-32 min-w-32 text-sm", padding.medium.cell),
+        name: cn("w-32 max-w-32 min-w-32 text-sm", padding.medium.name),
+      },
+      large: {
+        cell: cn("w-40 max-w-40 min-w-40 text-sm", padding.large.cell),
+        name: cn("w-40 max-w-40 min-w-40 text-sm", padding.large.name),
+      },
     } as const;
     return map[cellSize];
-  }, [cellSize]);
+  }, [cellSize, compactMode]);
 
   const exportCellClass = React.useMemo(
     () => ({ cell: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm", name: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm" }),
@@ -534,6 +557,13 @@ export default function SeatingPlannerPage() {
                 </Button>
 
                 <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2">
+                    <Switch id="compactMode" checked={compactMode} onCheckedChange={setCompactMode} />
+                    <Label htmlFor="compactMode" className="text-sm">
+                      Compact
+                    </Label>
+                  </div>
+
                   <Select value={cellSize} onValueChange={(v) => setCellSize(v as "small" | "medium" | "large")}>
                     <SelectTrigger className="w-[140px]">
                       <SelectValue placeholder="Cell size" />
