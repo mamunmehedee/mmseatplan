@@ -89,13 +89,6 @@ export default function SeatingPlannerPage() {
     return map[cellSize];
   }, [cellSize, compactMode]);
 
-  const exportCellClass = React.useMemo(() => {
-    // Export uses a fixed Medium-like size, but can still respect Compact mode density.
-    return compactMode
-      ? { cell: "w-24 max-w-24 min-w-24 px-0 py-0.5 text-sm", name: "w-24 max-w-24 min-w-24 px-0 py-0.5 text-sm" }
-      : { cell: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm", name: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm" };
-  }, [compactMode]);
-
   const renderTwoLineName = React.useCallback((raw: string) => {
     const name = raw.trim();
     if (!name) return null;
@@ -621,7 +614,7 @@ export default function SeatingPlannerPage() {
 
             <Separator />
 
-            {/* Export-only render (fixed Medium cell size) */}
+            {/* Export-only render (matches the preview exactly) */}
             <div className="fixed -left-[10000px] top-0 bg-background p-5" aria-hidden="true">
               <div ref={planExportRef} className="inline-block min-w-max">
                 <h2 className="mb-4 text-center text-lg font-semibold">{title || "Seating Plan"}</h2>
@@ -642,7 +635,7 @@ export default function SeatingPlannerPage() {
                           const grad = guest?.gradationNo;
 
                           return (
-                            <td key={i} className={cn("border text-center tabular-nums align-top", exportCellClass.cell)}>
+                            <td key={i} className={cn("border text-center tabular-nums align-top", cellSizeClass.cell)}>
                               {typeof grad === "number" ? grad : ""}
                             </td>
                           );
@@ -652,7 +645,7 @@ export default function SeatingPlannerPage() {
                         {serialNumbers.map((n, i) => {
                           const isChief = chiefIndex === i;
                           return (
-                            <td key={i} className={cn("border text-center tabular-nums align-top", exportCellClass.cell)}>
+                            <td key={i} className={cn("border text-center tabular-nums align-top", cellSizeClass.cell)}>
                               {isChief ? (
                                 <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
                               ) : n === 0 ? (
@@ -670,7 +663,7 @@ export default function SeatingPlannerPage() {
                             key={i}
                             className={cn(
                               "border text-center font-medium align-top whitespace-normal break-words",
-                              exportCellClass.name,
+                              cellSizeClass.name,
                             )}
                           >
                             {renderTwoLineName(name)}
