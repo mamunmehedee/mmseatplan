@@ -65,6 +65,11 @@ export default function SeatingPlannerPage() {
 
   const referenceOptions = React.useMemo(() => guests.filter((g) => g.id !== editingId), [guests, editingId]);
 
+  const guestByName = React.useMemo(() => {
+    const map = new Map<string, Guest>();
+    guests.forEach((g) => map.set(g.name, g));
+    return map;
+  }, [guests]);
   const upsertGuest = async (payload: Omit<Guest, "id">) => {
     try {
       if (!editingId) {
@@ -409,6 +414,19 @@ export default function SeatingPlannerPage() {
                 ) : (
                   <table className="mx-auto border-collapse text-sm">
                     <tbody>
+                      <tr>
+                        {arrangement.map((seatName, i) => {
+                          const baseName = seatName.startsWith("Spouse of ") ? seatName.slice("Spouse of ".length) : seatName;
+                          const guest = guestByName.get(baseName);
+                          const grad = guest?.gradationNo;
+
+                          return (
+                            <td key={i} className="border px-3 py-2 text-center tabular-nums">
+                              {typeof grad === "number" ? grad : ""}
+                            </td>
+                          );
+                        })}
+                      </tr>
                       <tr>
                         {serialNumbers.map((n, i) => (
                           <td key={i} className="border px-3 py-2 text-center tabular-nums">
