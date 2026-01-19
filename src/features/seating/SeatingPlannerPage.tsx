@@ -49,7 +49,7 @@ const defaultGuest: Omit<Guest, "id"> = {
 export default function SeatingPlannerPage() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { projects, saveProject, deleteProject } = useProjects(user?.id);
+  const { projects, saveProject, updateProject, deleteProject } = useProjects(user?.id);
   const { guests, loading, addGuest, updateGuest, deleteGuest } = useGuests();
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [title, setTitle] = React.useState("Seating Plan");
@@ -62,6 +62,7 @@ export default function SeatingPlannerPage() {
   const [saveDialogOpen, setSaveDialogOpen] = React.useState(false);
   const [loadDialogOpen, setLoadDialogOpen] = React.useState(false);
   const [projectName, setProjectName] = React.useState("");
+  const [editingProjectId, setEditingProjectId] = React.useState<string | null>(null);
 
 
   const planExportRef = React.useRef<HTMLDivElement | null>(null);
@@ -190,9 +191,27 @@ export default function SeatingPlannerPage() {
       return;
     }
 
-    await saveProject(projectName, title, cellSize, compactMode);
-    setProjectName("");
-    setSaveDialogOpen(false);
+    if (editingProjectId) {
+      const success = await updateProject(editingProjectId, projectName, title, cellSize, compactMode);
+      if (success) {
+        setProjectName("");
+        setEditingProjectId(null);
+        setSaveDialogOpen(false);
+      }
+    } else {
+      await saveProject(projectName, title, cellSize, compactMode);
+      setProjectName("");
+      setSaveDialogOpen(false);
+    }
+  };
+
+  const handleEditProject = (projectId: string) => {
+    const project = projects.find(p => p.id === projectId);
+    if (!project) return;
+
+    setProjectName(project.name);
+    setEditingProjectId(projectId);
+    setSaveDialogOpen(true);
   };
 
   const handleLoadProject = async (projectId: string) => {
@@ -360,7 +379,11 @@ export default function SeatingPlannerPage() {
               <FolderOpen /> Load
             </Button>
 
-            <Button variant="outline" size="sm" onClick={() => setSaveDialogOpen(true)}>
+            <Button variant="outline" size="sm" onClick={() => {
+              setProjectName("");
+              setEditingProjectId(null);
+              setSaveDialogOpen(true);
+            }}>
               <Save /> Save as
             </Button>
 
@@ -809,13 +832,18 @@ export default function SeatingPlannerPage() {
         </Card>
       </main>
 
-      {/* Save Project Dialog */}
-      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+      <Dialog open={saveDialogOpen} onOpenChange={(open) => {
+        setSaveDialogOpen(open);
+        if (!open) {
+          setProjectName("");
+          setEditingProjectId(null);
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Save Project</DialogTitle>
+            <DialogTitle>{editingProjectId ? "Update Project" : "Save Project"}</DialogTitle>
             <DialogDescription>
-              Give your seating plan a name to save it
+              {editingProjectId ? "Update your project name" : "Give your seating plan a name to save it"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -830,11 +858,15 @@ export default function SeatingPlannerPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
+            <Button variant="outline" onClick={() => {
+              setSaveDialogOpen(false);
+              setProjectName("");
+              setEditingProjectId(null);
+            }}>
               Cancel
             </Button>
             <Button onClick={handleSaveProject}>
-              <Save /> Save
+              <Save /> {editingProjectId ? "Update" : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -872,7 +904,14 @@ export default function SeatingPlannerPage() {
                       size="sm"
                       onClick={() => handleLoadProject(project.id)}
                     >
-                      Load
+                      <FolderOpen className="size-4" /> Load
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditProject(project.id)}
+                    >
+                      <Pencil className="size-4" /> Rename
                     </Button>
                     <Button
                       variant="destructive"

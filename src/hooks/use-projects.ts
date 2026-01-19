@@ -97,5 +97,36 @@ export function useProjects(userId: string | undefined) {
     }
   };
 
-  return { projects, loading, saveProject, deleteProject, refetch: fetchProjects };
+  const updateProject = async (
+    id: string,
+    name: string,
+    title: string,
+    cellSize: "small" | "medium" | "large",
+    compactMode: boolean
+  ) => {
+    try {
+      const { error } = await supabase
+        .from("seating_projects")
+        .update({
+          name,
+          title,
+          cell_size: cellSize,
+          compact_mode: compactMode,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+      
+      toast.success(`Project "${name}" updated`);
+      await fetchProjects();
+      return true;
+    } catch (error) {
+      console.error("Error updating project:", error);
+      toast.error("Failed to update project");
+      return false;
+    }
+  };
+
+  return { projects, loading, saveProject, updateProject, deleteProject, refetch: fetchProjects };
 }
