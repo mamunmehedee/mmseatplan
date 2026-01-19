@@ -1,5 +1,6 @@
 import * as React from "react";
 import { toPng } from "html-to-image";
+import { jsPDF } from "jspdf";
 import { Armchair, Download, Pencil, Plus, Trash2, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -36,6 +37,9 @@ export default function SeatingPlannerPage() {
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [title, setTitle] = React.useState("Seating Plan");
   const [exporting, setExporting] = React.useState(false);
+  const [exportingPdf, setExportingPdf] = React.useState(false);
+  const [pdfPaper, setPdfPaper] = React.useState<"a4" | "letter">("a4");
+  const [pdfMargin, setPdfMargin] = React.useState<"none" | "small" | "normal" | "large">("normal");
   const planRef = React.useRef<HTMLDivElement | null>(null);
 
   const editingGuest = React.useMemo(
@@ -96,6 +100,54 @@ export default function SeatingPlannerPage() {
       console.error("Failed to export image", e);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    if (!planRef.current) return;
+
+    const marginPt =
+      pdfMargin === "none" ? 0 : pdfMargin === "small" ? 18 : pdfMargin === "normal" ? 36 : 72;
+
+    try {
+      setExportingPdf(true);
+
+      // Capture the seating plan as an image, then place it on a landscape PDF page.
+      const dataUrl = await toPng(planRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: "hsl(var(--background))",
+      });
+
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "pt",
+        format: pdfPaper,
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const props = pdf.getImageProperties(dataUrl);
+      const imgW = props.width;
+      const imgH = props.height;
+
+      const maxW = pageWidth - marginPt * 2;
+      const maxH = pageHeight - marginPt * 2;
+      const scale = Math.min(maxW / imgW, maxH / imgH);
+
+      const renderW = imgW * scale;
+      const renderH = imgH * scale;
+      const x = (pageWidth - renderW) / 2;
+      const y = (pageHeight - renderH) / 2;
+
+      pdf.addImage(dataUrl, "PNG", x, y, renderW, renderH);
+
+      pdf.save(`${(title || "Seating Plan").trim().replace(/\s+/g, " ")}.pdf`);
+    } catch (e) {
+      console.error("Failed to export PDF", e);
+    } finally {
+      setExportingPdf(false);
     }
   };
 
@@ -426,9 +478,39 @@ export default function SeatingPlannerPage() {
                   <Input id="planTitle" value={title} onChange={(e) => setTitle(e.target.value)} />
                 </div>
 
-                <Button variant="outline" onClick={handleSaveAsImage} disabled={!!error || exporting}>
-                  <Download /> {exporting ? "Saving..." : "Save as image"}
-                </Button>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <Button variant="outline" onClick={handleSaveAsImage} disabled={!!error || exporting || exportingPdf}>
+                    <Download /> {exporting ? "Saving..." : "Save as image"}
+                  </Button>
+
+                  <div className="flex items-center gap-2">
+                    <Select value={pdfPaper} onValueChange={(v) => setPdfPaper(v as "a4" | "letter")}>
+                      <SelectTrigger className="w-[110px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="a4">A4</SelectItem>
+                        <SelectItem value="letter">Letter</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={pdfMargin} onValueChange={(v) => setPdfMargin(v as "none" | "small" | "normal" | "large")}>
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Margins" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No margins</SelectItem>
+                        <SelectItem value="small">Small</SelectItem>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="large">Large</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Button variant="outline" onClick={handleExportPdf} disabled={!!error || exporting || exportingPdf}>
+                      <Download /> {exportingPdf ? "Exporting..." : "Export PDF"}
+                    </Button>
+                  </div>
+                </div>
               </div>
 
               <Separator />
