@@ -89,10 +89,12 @@ export default function SeatingPlannerPage() {
     return map[cellSize];
   }, [cellSize, compactMode]);
 
-  const exportCellClass = React.useMemo(
-    () => ({ cell: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm", name: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm" }),
-    [],
-  );
+  const exportCellClass = React.useMemo(() => {
+    // Export uses a fixed Medium-like size, but can still respect Compact mode density.
+    return compactMode
+      ? { cell: "w-24 max-w-24 min-w-24 px-0 py-0.5 text-sm", name: "w-24 max-w-24 min-w-24 px-0 py-0.5 text-sm" }
+      : { cell: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm", name: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm" };
+  }, [compactMode]);
 
   const renderTwoLineName = React.useCallback((raw: string) => {
     const name = raw.trim();
