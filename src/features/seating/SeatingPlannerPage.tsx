@@ -1,7 +1,9 @@
 import * as React from "react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
-import { Armchair, Download, Pencil, Plus, Trash2, Users } from "lucide-react";
+import { Armchair, Download, Pencil, Plus, Trash2, Upload, Users } from "lucide-react";
+import { toast } from "sonner";
+import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,18 +35,34 @@ const defaultGuest: Omit<Guest, "id"> = {
   spousePosition: "N/A",
 };
 
+const guestImportExportSchema = z.array(
+  z.object({
+    id: z.string().uuid().optional(),
+    name: z.string().trim().min(1),
+    bdNo: z.string().optional().default(""),
+    gradationNo: z.number().int().positive().optional(),
+    dateCommission: z.string().optional(),
+    role: z.union([z.literal("Regular"), z.literal("Chief Guest"), z.literal("Custom")]),
+    referenceId: z.string().optional(),
+    beforeAfter: z.union([z.literal("Before"), z.literal("After")]).optional(),
+    spousePosition: z.union([z.literal("N/A"), z.literal("Before"), z.literal("After")]).optional(),
+  }),
+);
+
 export default function SeatingPlannerPage() {
   const { guests, loading, addGuest, updateGuest, deleteGuest } = useGuests();
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [title, setTitle] = React.useState("Seating Plan");
   const [exporting, setExporting] = React.useState(false);
   const [exportingPdf, setExportingPdf] = React.useState(false);
+  const [importingGuests, setImportingGuests] = React.useState(false);
   const [pdfPaper, setPdfPaper] = React.useState<"a4" | "letter">("a4");
   const [pdfMargin, setPdfMargin] = React.useState<"none" | "small" | "normal" | "large">("normal");
   const [cellSize, setCellSize] = React.useState<"small" | "medium" | "large">("medium");
   const [compactMode, setCompactMode] = React.useState(false);
 
   const planExportRef = React.useRef<HTMLDivElement | null>(null);
+  const guestJsonInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const cellSizeClass = React.useMemo(() => {
     const padding = compactMode
@@ -157,6 +175,105 @@ export default function SeatingPlannerPage() {
     guests.forEach((g) => map.set(g.name, g));
     return map;
   }, [guests]);
+
+  const handleExportGuestsJson = React.useCallback(() => {
+    try {
+      const payload = guests.map((g) => ({
+        id: g.id,
+        name: g.name,
+        bdNo: g.bdNo,
+        gradationNo: g.gradationNo,
+        dateCommission: g.dateCommission ?? "",
+        role: g.role,
+        referenceId: g.referenceId,
+        beforeAfter: g.beforeAfter,
+        spousePosition: g.spousePosition,
+      }));
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `guests-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.success(`Exported ${payload.length} guests`);
+    } catch (e) {
+      console.error("Failed to export guests JSON", e);
+      toast.error("Failed to export guests JSON");
+    }
+  }, [guests]);
+
+  const handleImportGuestsClick = React.useCallback(() => {
+    guestJsonInputRef.current?.click();
+  }, []);
+
+  const handleGuestsJsonSelected = React.useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      // Allow selecting the same file again later
+      e.target.value = "";
+      if (!file) return;
+
+      try {
+        setImportingGuests(true);
+
+        const text = await file.text();
+        const parsedJson = JSON.parse(text);
+        const parsed = guestImportExportSchema.parse(parsedJson);
+
+        const existingByBdNo = new Map<string, Guest>();
+        guests.forEach((g) => {
+          const key = g.bdNo.trim();
+          if (key) existingByBdNo.set(key, g);
+        });
+
+        let inserted = 0;
+        let updated = 0;
+
+        for (const row of parsed) {
+          const role = row.role;
+
+          const cleaned: Omit<Guest, "id"> = {
+            name: row.name.trim(),
+            bdNo: (row.bdNo ?? "").trim(),
+            gradationNo: row.gradationNo,
+            dateCommission: row.dateCommission ?? "",
+            role,
+            referenceId: role === "Custom" ? row.referenceId : undefined,
+            beforeAfter: role === "Custom" ? row.beforeAfter ?? "Before" : undefined,
+            spousePosition: row.spousePosition ?? "N/A",
+          };
+
+          if (!cleaned.name) continue;
+          if (role === "Regular" && (cleaned.gradationNo === undefined || Number.isNaN(cleaned.gradationNo))) {
+            throw new Error(`Regular guest is missing gradationNo: ${cleaned.name}`);
+          }
+
+          const bdKey = cleaned.bdNo;
+          const existing = bdKey ? existingByBdNo.get(bdKey) : undefined;
+
+          if (existing) {
+            await updateGuest(existing.id, cleaned);
+            updated++;
+          } else {
+            await addGuest(cleaned);
+            inserted++;
+          }
+        }
+
+        toast.success(`Import complete: ${inserted} added, ${updated} updated`);
+      } catch (err) {
+        console.error("Failed to import guests JSON", err);
+        const message = err instanceof Error ? err.message : "Invalid JSON file";
+        toast.error(`Import failed: ${message}`);
+      } finally {
+        setImportingGuests(false);
+      }
+    },
+    [addGuest, guests, updateGuest],
+  );
 
   const handleSaveAsImage = async () => {
     if (!planExportRef.current) return;
@@ -302,9 +419,35 @@ export default function SeatingPlannerPage() {
             </div>
           </div>
 
-          <Button onClick={() => setEditingId(null)}>
-            <Plus /> New guest
-          </Button>
+          <div className="flex items-center gap-2">
+            <input
+              ref={guestJsonInputRef}
+              type="file"
+              accept="application/json,.json"
+              className="hidden"
+              onChange={handleGuestsJsonSelected}
+            />
+
+            <Button
+              variant="outline"
+              onClick={handleExportGuestsJson}
+              disabled={loading || importingGuests}
+            >
+              <Download /> Export guests
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={handleImportGuestsClick}
+              disabled={loading || importingGuests}
+            >
+              <Upload /> {importingGuests ? "Importing..." : "Import guests"}
+            </Button>
+
+            <Button onClick={() => setEditingId(null)}>
+              <Plus /> New guest
+            </Button>
+          </div>
         </div>
       </header>
 
