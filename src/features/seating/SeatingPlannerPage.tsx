@@ -1,21 +1,10 @@
 import * as React from "react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
-import { Armchair, Download, Pencil, Plus, Trash2, LogOut, Save, FolderOpen } from "lucide-react";
-import { toast } from "sonner";
-import { z } from "zod";
-import { useNavigate } from "react-router-dom";
+import { Armchair, Download, Pencil, Plus, Trash2, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -29,8 +18,6 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { useGuests } from "@/hooks/use-guests";
-import { useAuth } from "@/hooks/use-auth";
-import { useProjects } from "@/hooks/use-projects";
 
 import type { Guest, GuestRole, SpousePosition } from "./types";
 import { buildArrangement, computeSerialNumbers } from "./seatingLogic";
@@ -47,9 +34,6 @@ const defaultGuest: Omit<Guest, "id"> = {
 };
 
 export default function SeatingPlannerPage() {
-  const navigate = useNavigate();
-  const { user, signOut } = useAuth();
-  const { projects, saveProject, updateProject, deleteProject } = useProjects(user?.id);
   const { guests, loading, addGuest, updateGuest, deleteGuest } = useGuests();
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [title, setTitle] = React.useState("Seating Plan");
@@ -59,19 +43,8 @@ export default function SeatingPlannerPage() {
   const [pdfMargin, setPdfMargin] = React.useState<"none" | "small" | "normal" | "large">("normal");
   const [cellSize, setCellSize] = React.useState<"small" | "medium" | "large">("medium");
   const [compactMode, setCompactMode] = React.useState(false);
-  const [saveDialogOpen, setSaveDialogOpen] = React.useState(false);
-  const [loadDialogOpen, setLoadDialogOpen] = React.useState(false);
-  const [projectName, setProjectName] = React.useState("");
-  const [editingProjectId, setEditingProjectId] = React.useState<string | null>(null);
-
 
   const planExportRef = React.useRef<HTMLDivElement | null>(null);
-
-  React.useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-    }
-  }, [user, navigate]);
 
   const cellSizeClass = React.useMemo(() => {
     const padding = compactMode
@@ -184,51 +157,6 @@ export default function SeatingPlannerPage() {
     guests.forEach((g) => map.set(g.name, g));
     return map;
   }, [guests]);
-
-  const handleSaveProject = async () => {
-    if (!projectName.trim()) {
-      toast.error("Please enter a project name");
-      return;
-    }
-
-    if (editingProjectId) {
-      const success = await updateProject(editingProjectId, projectName, title, cellSize, compactMode);
-      if (success) {
-        setProjectName("");
-        setEditingProjectId(null);
-        setSaveDialogOpen(false);
-      }
-    } else {
-      await saveProject(projectName, title, cellSize, compactMode);
-      setProjectName("");
-      setSaveDialogOpen(false);
-    }
-  };
-
-  const handleEditProject = (projectId: string) => {
-    const project = projects.find(p => p.id === projectId);
-    if (!project) return;
-
-    setProjectName(project.name);
-    setEditingProjectId(projectId);
-    setSaveDialogOpen(true);
-  };
-
-  const handleLoadProject = async (projectId: string) => {
-    const project = projects.find(p => p.id === projectId);
-    if (!project) return;
-
-    setTitle(project.title);
-    setCellSize(project.cell_size);
-    setCompactMode(project.compact_mode);
-    setLoadDialogOpen(false);
-    toast.success(`Loaded "${project.name}"`);
-  };
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/auth");
-  };
 
   const handleSaveAsImage = async () => {
     if (!planExportRef.current) return;
@@ -366,7 +294,7 @@ export default function SeatingPlannerPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-6">
           <div className="flex items-center gap-3">
             <div className="grid size-10 place-items-center rounded-md bg-primary text-primary-foreground">
-              <Armchair className="size-5" />
+              <Users className="size-5" />
             </div>
             <div>
               <h1 className="text-xl font-semibold">Seating Plan Builder</h1>
@@ -374,27 +302,9 @@ export default function SeatingPlannerPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setLoadDialogOpen(true)}>
-              <FolderOpen /> Load
-            </Button>
-
-            <Button variant="outline" size="sm" onClick={() => {
-              setProjectName("");
-              setEditingProjectId(null);
-              setSaveDialogOpen(true);
-            }}>
-              <Save /> Save as
-            </Button>
-
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              <LogOut /> Sign out
-            </Button>
-
-            <Button onClick={() => setEditingId(null)}>
-              <Plus /> New guest
-            </Button>
-          </div>
+          <Button onClick={() => setEditingId(null)}>
+            <Plus /> New guest
+          </Button>
         </div>
       </header>
 
@@ -830,108 +740,8 @@ export default function SeatingPlannerPage() {
             <p className="text-xs text-muted-foreground">Data is automatically saved to the backend and synced across sessions.</p>
           </CardContent>
         </Card>
+
       </main>
-
-      <Dialog open={saveDialogOpen} onOpenChange={(open) => {
-        setSaveDialogOpen(open);
-        if (!open) {
-          setProjectName("");
-          setEditingProjectId(null);
-        }
-      }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{editingProjectId ? "Update Project" : "Save Project"}</DialogTitle>
-            <DialogDescription>
-              {editingProjectId ? "Update your project name" : "Give your seating plan a name to save it"}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="project-name">Project Name</Label>
-              <Input
-                id="project-name"
-                placeholder="e.g. Wedding Reception 2024"
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => {
-              setSaveDialogOpen(false);
-              setProjectName("");
-              setEditingProjectId(null);
-            }}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveProject}>
-              <Save /> {editingProjectId ? "Update" : "Save"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Load Project Dialog */}
-      <Dialog open={loadDialogOpen} onOpenChange={setLoadDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Load Project</DialogTitle>
-            <DialogDescription>
-              Select a project to load
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 py-4">
-            {projects.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No saved projects yet
-              </p>
-            ) : (
-              projects.map((project) => (
-                <div
-                  key={project.id}
-                  className="flex items-center justify-between rounded-lg border p-3 hover:bg-muted/50"
-                >
-                  <div className="flex-1">
-                    <p className="font-medium">{project.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(project.updated_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleLoadProject(project.id)}
-                    >
-                      <FolderOpen className="size-4" /> Load
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEditProject(project.id)}
-                    >
-                      <Pencil className="size-4" /> Rename
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => deleteProject(project.id)}
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setLoadDialogOpen(false)}>
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
