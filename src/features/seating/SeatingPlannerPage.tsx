@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Download, Pencil, Plus, Trash2, Users } from "lucide-react";
+import { Armchair, Download, Pencil, Plus, Trash2, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -61,7 +61,10 @@ export default function SeatingPlannerPage() {
   }, [editingGuest]);
 
   const { arrangement, error } = React.useMemo(() => buildArrangement(guests), [guests]);
-  const { serialNumbers } = React.useMemo(() => computeSerialNumbers(guests, arrangement), [guests, arrangement]);
+  const { serialNumbers, chiefIndex } = React.useMemo(
+    () => computeSerialNumbers(guests, arrangement),
+    [guests, arrangement],
+  );
 
   const referenceOptions = React.useMemo(() => guests.filter((g) => g.id !== editingId), [guests, editingId]);
 
@@ -414,6 +417,13 @@ export default function SeatingPlannerPage() {
                 ) : (
                   <table className="mx-auto border-collapse text-sm">
                     <tbody>
+                      <tr>
+                        {arrangement.map((_, i) => (
+                          <td key={i} className="border px-3 py-2 text-center">
+                            {chiefIndex === i ? <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" /> : ""}
+                          </td>
+                        ))}
+                      </tr>
                       <tr>
                         {arrangement.map((seatName, i) => {
                           const baseName = seatName.startsWith("Spouse of ") ? seatName.slice("Spouse of ".length) : seatName;
