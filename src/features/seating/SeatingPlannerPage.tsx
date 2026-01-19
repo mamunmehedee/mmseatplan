@@ -231,7 +231,8 @@ export default function SeatingPlannerPage() {
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-6xl gap-6 px-6 py-8 lg:grid-cols-[420px_1fr]">
+      <main className="px-6 py-8 space-y-6">
+        <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[420px_1fr]">
         <Card>
           <CardHeader>
             <CardTitle>{editingId ? "Edit guest" : "Add guest"}</CardTitle>
@@ -467,7 +468,9 @@ export default function SeatingPlannerPage() {
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-2">
+        </div>
+
+        <Card>
           <CardHeader>
             <CardTitle>Seating plan</CardTitle>
             <CardDescription>Preview generated from your arrangement rules.</CardDescription>
@@ -520,60 +523,61 @@ export default function SeatingPlannerPage() {
             <Separator />
 
             <div
-              ref={planRef}
               className="overflow-x-auto rounded-lg border bg-card p-5"
               aria-label="Seating plan preview"
             >
-              <h2 className="mb-4 text-center text-lg font-semibold">{title || "Seating Plan"}</h2>
+              <div ref={planRef} className="inline-block min-w-max">
+                <h2 className="mb-4 text-center text-lg font-semibold">{title || "Seating Plan"}</h2>
 
-              {error ? (
-                <div className="rounded-lg border bg-muted p-4 text-sm text-muted-foreground">
-                  {error} (Set one guest to “Chief Guest”.)
-                </div>
-              ) : (
-                <table className="mx-auto border-collapse text-sm">
-                  <tbody>
-                    <tr>
-                      {arrangement.map((seatName, i) => {
-                        const baseName = seatName.startsWith("Spouse of ")
-                          ? seatName.slice("Spouse of ".length)
-                          : seatName;
-                        const guest = guestByName.get(baseName);
-                        const grad = guest?.gradationNo;
+                {error ? (
+                  <div className="rounded-lg border bg-muted p-4 text-sm text-muted-foreground">
+                    {error} (Set one guest to “Chief Guest”.)
+                  </div>
+                ) : (
+                  <table className="border-collapse text-sm">
+                    <tbody>
+                      <tr>
+                        {arrangement.map((seatName, i) => {
+                          const baseName = seatName.startsWith("Spouse of ")
+                            ? seatName.slice("Spouse of ".length)
+                            : seatName;
+                          const guest = guestByName.get(baseName);
+                          const grad = guest?.gradationNo;
 
-                        return (
-                          <td key={i} className="border px-3 py-2 text-center tabular-nums">
-                            {typeof grad === "number" ? grad : ""}
+                          return (
+                            <td key={i} className="border px-3 py-2 text-center tabular-nums">
+                              {typeof grad === "number" ? grad : ""}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                      <tr>
+                        {serialNumbers.map((n, i) => {
+                          const isChief = chiefIndex === i;
+                          return (
+                            <td key={i} className="border px-3 py-2 text-center tabular-nums">
+                              {isChief ? (
+                                <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
+                              ) : n === 0 ? (
+                                ""
+                              ) : (
+                                n
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                      <tr>
+                        {arrangement.map((name, i) => (
+                          <td key={i} className="border px-3 py-2 text-center font-medium">
+                            {name}
                           </td>
-                        );
-                      })}
-                    </tr>
-                    <tr>
-                      {serialNumbers.map((n, i) => {
-                        const isChief = chiefIndex === i;
-                        return (
-                          <td key={i} className="border px-3 py-2 text-center tabular-nums">
-                            {isChief ? (
-                              <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
-                            ) : n === 0 ? (
-                              ""
-                            ) : (
-                              n
-                            )}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                    <tr>
-                      {arrangement.map((name, i) => (
-                        <td key={i} className="border px-3 py-2 text-center font-medium">
-                          {name}
-                        </td>
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
-              )}
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
+              </div>
             </div>
 
             <p className="text-xs text-muted-foreground">Data is automatically saved to the backend and synced across sessions.</p>
