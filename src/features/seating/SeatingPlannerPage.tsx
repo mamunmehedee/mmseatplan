@@ -635,7 +635,7 @@ export default function SeatingPlannerPage() {
                           const grad = guest?.gradationNo;
 
                           return (
-                            <td key={i} className={cn("border text-center tabular-nums align-top", cellSizeClass.cell)}>
+                            <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
                               {typeof grad === "number" ? grad : ""}
                             </td>
                           );
@@ -645,7 +645,7 @@ export default function SeatingPlannerPage() {
                         {serialNumbers.map((n, i) => {
                           const isChief = chiefIndex === i;
                           return (
-                            <td key={i} className={cn("border text-center tabular-nums align-top", cellSizeClass.cell)}>
+                            <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
                               {isChief ? (
                                 <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
                               ) : n === 0 ? (
@@ -662,7 +662,7 @@ export default function SeatingPlannerPage() {
                           <td
                             key={i}
                             className={cn(
-                              "border text-center font-medium align-top whitespace-normal break-words",
+                              "border text-center font-medium align-middle whitespace-normal break-words",
                               cellSizeClass.name,
                             )}
                           >
@@ -696,9 +696,9 @@ export default function SeatingPlannerPage() {
                           const grad = guest?.gradationNo;
 
                           return (
-                            <td key={i} className={cn("border text-center tabular-nums align-top", cellSizeClass.cell)}>
-                              {typeof grad === "number" ? grad : ""}
-                            </td>
+                             <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
+                               {typeof grad === "number" ? grad : ""}
+                             </td>
                           );
                         })}
                       </tr>
@@ -706,15 +706,15 @@ export default function SeatingPlannerPage() {
                         {serialNumbers.map((n, i) => {
                           const isChief = chiefIndex === i;
                           return (
-                            <td key={i} className={cn("border text-center tabular-nums align-top", cellSizeClass.cell)}>
-                              {isChief ? (
-                                <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
-                              ) : n === 0 ? (
-                                ""
-                              ) : (
-                                n
-                              )}
-                            </td>
+                             <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
+                               {isChief ? (
+                                 <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
+                               ) : n === 0 ? (
+                                 ""
+                               ) : (
+                                 n
+                               )}
+                             </td>
                           );
                         })}
                       </tr>
@@ -722,10 +722,10 @@ export default function SeatingPlannerPage() {
                         {arrangement.map((name, i) => (
                           <td
                             key={i}
-                            className={cn(
-                              "border text-center font-medium align-top whitespace-normal break-words",
-                              cellSizeClass.name,
-                            )}
+                             className={cn(
+                               "border text-center font-medium align-middle whitespace-normal break-words",
+                               cellSizeClass.name,
+                             )}
                           >
                             {renderTwoLineName(name)}
                           </td>
