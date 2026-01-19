@@ -49,9 +49,9 @@ export default function SeatingPlannerPage() {
   const cellSizeClass = React.useMemo(() => {
     const padding = compactMode
       ? {
-          small: { cell: "px-1 py-0.5", name: "px-1 py-0.5" },
-          medium: { cell: "px-1 py-0.5", name: "px-1 py-0.5" },
-          large: { cell: "px-1.5 py-1", name: "px-1.5 py-1" },
+          small: { cell: "px-0.5 py-0.5", name: "px-0.5 py-0.5" },
+          medium: { cell: "px-0.5 py-0.5", name: "px-0.5 py-0.5" },
+          large: { cell: "px-1 py-1", name: "px-1 py-1" },
         }
       : {
           small: { cell: "px-2 py-1.5", name: "px-2 py-2" },
