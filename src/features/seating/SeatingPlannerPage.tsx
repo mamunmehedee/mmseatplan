@@ -14,17 +14,10 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useLocalStorageState } from "@/hooks/use-local-storage-state";
+import { useGuests } from "@/hooks/use-guests";
 
 import type { Guest, GuestRole, SpousePosition } from "./types";
 import { buildArrangement, computeSerialNumbers } from "./seatingLogic";
-
-const LS_KEY = "seating_plan.guests.v1";
-
-function uid() {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) return crypto.randomUUID();
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
 
 const defaultGuest: Omit<Guest, "id"> = {
   name: "",
@@ -38,7 +31,7 @@ const defaultGuest: Omit<Guest, "id"> = {
 };
 
 export default function SeatingPlannerPage() {
-  const [guests, setGuests] = useLocalStorageState<Guest[]>(LS_KEY, []);
+  const { guests, loading, addGuest, updateGuest, deleteGuest } = useGuests();
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [title, setTitle] = React.useState("Seating Plan");
 
@@ -72,25 +65,20 @@ export default function SeatingPlannerPage() {
 
   const referenceOptions = React.useMemo(() => guests.filter((g) => g.id !== editingId), [guests, editingId]);
 
-  const upsertGuest = (payload: Omit<Guest, "id">) => {
-    setGuests((prev) => {
+  const upsertGuest = async (payload: Omit<Guest, "id">) => {
+    try {
       if (!editingId) {
-        return [
-          ...prev,
-          {
-            id: uid(),
-            ...payload,
-            dateCommission: payload.dateCommission || "",
-            bdNo: payload.bdNo || "",
-          },
-        ];
+        await addGuest(payload);
+      } else {
+        await updateGuest(editingId, payload);
       }
-      return prev.map((g) => (g.id === editingId ? { ...g, ...payload } : g));
-    });
-    setEditingId(null);
+      setEditingId(null);
+    } catch (error) {
+      console.error("Error saving guest:", error);
+    }
   };
 
-  const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const role: GuestRole = form.role;
@@ -112,16 +100,27 @@ export default function SeatingPlannerPage() {
     if (!cleaned.name) return;
     if (role === "Regular" && (cleaned.gradationNo === undefined || Number.isNaN(cleaned.gradationNo))) return;
 
-    upsertGuest(cleaned);
+    await upsertGuest(cleaned);
   };
 
-  const deleteGuest = (id: string) => {
-    setGuests((prev) => prev.filter((g) => g.id !== id));
-    if (editingId === id) setEditingId(null);
+  const handleDeleteGuest = async (id: string) => {
+    try {
+      await deleteGuest(id);
+      if (editingId === id) setEditingId(null);
+    } catch (error) {
+      console.error("Error deleting guest:", error);
+    }
   };
 
-  const toggleSpouse = (id: string, next: SpousePosition) => {
-    setGuests((prev) => prev.map((g) => (g.id === id ? { ...g, spousePosition: next } : g)));
+  const toggleSpouse = async (id: string, next: SpousePosition) => {
+    const guest = guests.find((g) => g.id === id);
+    if (!guest) return;
+
+    try {
+      await updateGuest(id, { ...guest, spousePosition: next });
+    } catch (error) {
+      console.error("Error updating spouse position:", error);
+    }
   };
 
   return (
@@ -319,7 +318,13 @@ export default function SeatingPlannerPage() {
                     </tr>
                   </thead>
                   <tbody className="bg-card">
-                    {guests.length === 0 ? (
+                    {loading ? (
+                      <tr>
+                        <td className="px-3 py-8 text-center text-muted-foreground" colSpan={8}>
+                          Loading guests...
+                        </td>
+                      </tr>
+                    ) : guests.length === 0 ? (
                       <tr>
                         <td className="px-3 py-8 text-center text-muted-foreground" colSpan={8}>
                           Add guests on the left to generate your plan.
@@ -360,7 +365,7 @@ export default function SeatingPlannerPage() {
                                 <Pencil />
                                 <span className="sr-only">Edit</span>
                               </Button>
-                              <Button type="button" size="icon" variant="destructive" onClick={() => deleteGuest(g.id)}>
+                              <Button type="button" size="icon" variant="destructive" onClick={() => handleDeleteGuest(g.id)}>
                                 <Trash2 />
                                 <span className="sr-only">Delete</span>
                               </Button>
@@ -423,7 +428,9 @@ export default function SeatingPlannerPage() {
                 )}
               </div>
 
-              <p className="text-xs text-muted-foreground">Data is saved locally in this browser.</p>
+              <p className="text-xs text-muted-foreground">
+                Data is automatically saved to the backend and synced across sessions.
+              </p>
             </CardContent>
           </Card>
         </div>

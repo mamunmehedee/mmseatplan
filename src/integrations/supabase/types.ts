@@ -14,7 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      guests: {
+        Row: {
+          bd_no: string | null
+          before_after: string | null
+          created_at: string
+          date_commission: string | null
+          gradation_no: number | null
+          id: string
+          name: string
+          reference_id: string | null
+          role: string
+          spouse_position: string
+          updated_at: string
+        }
+        Insert: {
+          bd_no?: string | null
+          before_after?: string | null
+          created_at?: string
+          date_commission?: string | null
+          gradation_no?: number | null
+          id?: string
+          name: string
+          reference_id?: string | null
+          role: string
+          spouse_position?: string
+          updated_at?: string
+        }
+        Update: {
+          bd_no?: string | null
+          before_after?: string | null
+          created_at?: string
+          date_commission?: string | null
+          gradation_no?: number | null
+          id?: string
+          name?: string
+          reference_id?: string | null
+          role?: string
+          spouse_position?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guests_reference_id_fkey"
+            columns: ["reference_id"]
+            isOneToOne: false
+            referencedRelation: "guests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
