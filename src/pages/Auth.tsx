@@ -16,19 +16,29 @@ export default function Auth() {
   const [password, setPassword] = useState("");
 
   useEffect(() => {
+    let isMounted = true;
+
+    const goHome = () => {
+      // Defer navigation to avoid "The operation is insecure" errors in some embedded contexts.
+      setTimeout(() => {
+        if (isMounted) navigate("/", { replace: true });
+      }, 0);
+    };
+
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        navigate("/");
-      }
+      if (session) goHome();
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session) {
-        navigate("/");
-      }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) goHome();
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, [navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
