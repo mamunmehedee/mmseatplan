@@ -41,12 +41,7 @@ export default function SeatingPlannerPage() {
   const [pdfPaper, setPdfPaper] = React.useState<"a4" | "letter">("a4");
   const [pdfMargin, setPdfMargin] = React.useState<"none" | "small" | "normal" | "large">("normal");
 
-  const planViewportRef = React.useRef<HTMLDivElement | null>(null);
   const planExportRef = React.useRef<HTMLDivElement | null>(null);
-  const planContentRef = React.useRef<HTMLDivElement | null>(null);
-
-  const [fitScale, setFitScale] = React.useState(1);
-  const [fitBox, setFitBox] = React.useState<{ width: number; height: number }>({ width: 0, height: 0 });
 
   const editingGuest = React.useMemo(
     () => (editingId ? guests.find((g) => g.id === editingId) ?? null : null),
@@ -80,31 +75,6 @@ export default function SeatingPlannerPage() {
   );
 
   const referenceOptions = React.useMemo(() => guests.filter((g) => g.id !== editingId), [guests, editingId]);
-
-  React.useLayoutEffect(() => {
-    const viewport = planViewportRef.current;
-    const content = planContentRef.current;
-    if (!viewport || !content) return;
-
-    const recompute = () => {
-      const viewportW = viewport.clientWidth;
-      const contentW = content.scrollWidth;
-      const contentH = content.scrollHeight;
-      if (!viewportW || !contentW) return;
-
-      const nextScale = Math.min(1, viewportW / contentW);
-      setFitScale(nextScale);
-      setFitBox({ width: Math.ceil(contentW * nextScale), height: Math.ceil(contentH * nextScale) });
-    };
-
-    recompute();
-
-    const ro = new ResizeObserver(() => recompute());
-    ro.observe(viewport);
-    ro.observe(content);
-
-    return () => ro.disconnect();
-  }, [arrangement.length, title]);
 
   const guestByName = React.useMemo(() => {
     const map = new Map<string, Guest>();
@@ -554,71 +524,63 @@ export default function SeatingPlannerPage() {
             <Separator />
 
             <div
-              ref={planViewportRef}
               className="overflow-x-auto rounded-lg border bg-card p-5"
               aria-label="Seating plan preview"
             >
-              <div
-                ref={planExportRef}
-                className="mx-auto"
-                style={fitBox.width > 0 && fitBox.height > 0 ? { width: fitBox.width, height: fitBox.height } : undefined}
-              >
-                <div
-                  ref={planContentRef}
-                  style={{ transform: `scale(${fitScale})`, transformOrigin: "top left" }}
-                  className="w-full"
-                >
-                  <h2 className="mb-4 text-center text-lg font-semibold">{title || "Seating Plan"}</h2>
+              <div ref={planExportRef} className="inline-block min-w-max">
+                <h2 className="mb-4 text-center text-lg font-semibold">{title || "Seating Plan"}</h2>
 
-                  {error ? (
-                    <div className="rounded-lg border bg-muted p-4 text-sm text-muted-foreground">
-                      {error} (Set one guest to “Chief Guest”.)
-                    </div>
-                  ) : (
-                    <table className="w-full table-fixed border-collapse text-sm">
-                      <tbody>
-                        <tr>
-                          {arrangement.map((seatName, i) => {
-                            const baseName = seatName.startsWith("Spouse of ")
-                              ? seatName.slice("Spouse of ".length)
-                              : seatName;
-                            const guest = guestByName.get(baseName);
-                            const grad = guest?.gradationNo;
+                {error ? (
+                  <div className="rounded-lg border bg-muted p-4 text-sm text-muted-foreground">
+                    {error} (Set one guest to “Chief Guest”.)
+                  </div>
+                ) : (
+                  <table className="border-collapse text-sm">
+                    <tbody>
+                      <tr>
+                        {arrangement.map((seatName, i) => {
+                          const baseName = seatName.startsWith("Spouse of ")
+                            ? seatName.slice("Spouse of ".length)
+                            : seatName;
+                          const guest = guestByName.get(baseName);
+                          const grad = guest?.gradationNo;
 
-                            return (
-                              <td key={i} className="border px-3 py-2 text-center tabular-nums">
-                                {typeof grad === "number" ? grad : ""}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                        <tr>
-                          {serialNumbers.map((n, i) => {
-                            const isChief = chiefIndex === i;
-                            return (
-                              <td key={i} className="border px-3 py-2 text-center tabular-nums">
-                                {isChief ? (
-                                  <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
-                                ) : n === 0 ? (
-                                  ""
-                                ) : (
-                                  n
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                        <tr>
-                          {arrangement.map((name, i) => (
-                            <td key={i} className="border px-3 py-2 text-center font-medium whitespace-normal break-words">
-                              {name}
+                          return (
+                            <td key={i} className="border px-3 py-2 text-center tabular-nums min-w-28">
+                              {typeof grad === "number" ? grad : ""}
                             </td>
-                          ))}
-                        </tr>
-                      </tbody>
-                    </table>
-                  )}
-                </div>
+                          );
+                        })}
+                      </tr>
+                      <tr>
+                        {serialNumbers.map((n, i) => {
+                          const isChief = chiefIndex === i;
+                          return (
+                            <td key={i} className="border px-3 py-2 text-center tabular-nums min-w-28">
+                              {isChief ? (
+                                <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
+                              ) : n === 0 ? (
+                                ""
+                              ) : (
+                                n
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                      <tr>
+                        {arrangement.map((name, i) => (
+                          <td
+                            key={i}
+                            className="border px-3 py-3 text-center font-medium min-w-28 whitespace-normal break-words"
+                          >
+                            {name}
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
 
