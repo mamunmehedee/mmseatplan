@@ -384,200 +384,202 @@ export default function SeatingPlannerPage() {
           </CardContent>
         </Card>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Guests list</CardTitle>
-              <CardDescription>Toggle spouse placement directly.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto rounded-lg border">
-                <table className="w-full border-collapse text-sm">
-                  <thead className="bg-muted">
+        <Card>
+          <CardHeader>
+            <CardTitle>Guests list</CardTitle>
+            <CardDescription>Toggle spouse placement directly.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto rounded-lg border">
+              <table className="w-full border-collapse text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-3 py-2 text-left">#</th>
+                    <th className="px-3 py-2 text-left">Name</th>
+                    <th className="px-3 py-2">BD</th>
+                    <th className="px-3 py-2">Grad</th>
+                    <th className="px-3 py-2">Commission</th>
+                    <th className="px-3 py-2">Role</th>
+                    <th className="px-3 py-2">Spouse</th>
+                    <th className="px-3 py-2">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-card">
+                  {loading ? (
                     <tr>
-                      <th className="px-3 py-2 text-left">#</th>
-                      <th className="px-3 py-2 text-left">Name</th>
-                      <th className="px-3 py-2">BD</th>
-                      <th className="px-3 py-2">Grad</th>
-                      <th className="px-3 py-2">Commission</th>
-                      <th className="px-3 py-2">Role</th>
-                      <th className="px-3 py-2">Spouse</th>
-                      <th className="px-3 py-2">Action</th>
+                      <td className="px-3 py-8 text-center text-muted-foreground" colSpan={8}>
+                        Loading guests...
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="bg-card">
-                    {loading ? (
-                      <tr>
-                        <td className="px-3 py-8 text-center text-muted-foreground" colSpan={8}>
-                          Loading guests...
+                  ) : guests.length === 0 ? (
+                    <tr>
+                      <td className="px-3 py-8 text-center text-muted-foreground" colSpan={8}>
+                        Add guests on the left to generate your plan.
+                      </td>
+                    </tr>
+                  ) : (
+                    guests.map((g, idx) => (
+                      <tr key={g.id} className={cn("border-t", idx % 2 === 1 && "bg-muted/40")}>
+                        <td className="px-3 py-2 text-left tabular-nums">{idx + 1}</td>
+                        <td className="px-3 py-2 text-left font-medium">{g.name}</td>
+                        <td className="px-3 py-2 text-center">{g.bdNo}</td>
+                        <td className="px-3 py-2 text-center tabular-nums">{g.gradationNo ?? ""}</td>
+                        <td className="px-3 py-2 text-center">{g.dateCommission ?? ""}</td>
+                        <td className="px-3 py-2 text-center">{g.role}</td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center justify-center gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={g.spousePosition === "Before" ? "secondary" : "outline"}
+                              onClick={() => toggleSpouse(g.id, g.spousePosition === "Before" ? "N/A" : "Before")}
+                            >
+                              Before
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={g.spousePosition === "After" ? "secondary" : "outline"}
+                              onClick={() => toggleSpouse(g.id, g.spousePosition === "After" ? "N/A" : "After")}
+                            >
+                              After
+                            </Button>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center justify-center gap-2">
+                            <Button type="button" size="icon" variant="outline" onClick={() => setEditingId(g.id)}>
+                              <Pencil />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                            <Button type="button" size="icon" variant="destructive" onClick={() => handleDeleteGuest(g.id)}>
+                              <Trash2 />
+                              <span className="sr-only">Delete</span>
+                            </Button>
+                          </div>
                         </td>
                       </tr>
-                    ) : guests.length === 0 ? (
-                      <tr>
-                        <td className="px-3 py-8 text-center text-muted-foreground" colSpan={8}>
-                          Add guests on the left to generate your plan.
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Seating plan</CardTitle>
+            <CardDescription>Preview generated from your arrangement rules.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div className="w-full max-w-md space-y-2">
+                <Label htmlFor="planTitle">Enter the title</Label>
+                <Input id="planTitle" value={title} onChange={(e) => setTitle(e.target.value)} />
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Button variant="outline" onClick={handleSaveAsImage} disabled={!!error || exporting || exportingPdf}>
+                  <Download /> {exporting ? "Saving..." : "Save as image"}
+                </Button>
+
+                <div className="flex items-center gap-2">
+                  <Select value={pdfPaper} onValueChange={(v) => setPdfPaper(v as "a4" | "letter")}>
+                    <SelectTrigger className="w-[110px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="a4">A4</SelectItem>
+                      <SelectItem value="letter">Letter</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Select
+                    value={pdfMargin}
+                    onValueChange={(v) => setPdfMargin(v as "none" | "small" | "normal" | "large")}
+                  >
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Margins" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No margins</SelectItem>
+                      <SelectItem value="small">Small</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="large">Large</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  <Button variant="outline" onClick={handleExportPdf} disabled={!!error || exporting || exportingPdf}>
+                    <Download /> {exportingPdf ? "Exporting..." : "Export PDF"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div
+              ref={planRef}
+              className="overflow-x-auto rounded-lg border bg-card p-5"
+              aria-label="Seating plan preview"
+            >
+              <h2 className="mb-4 text-center text-lg font-semibold">{title || "Seating Plan"}</h2>
+
+              {error ? (
+                <div className="rounded-lg border bg-muted p-4 text-sm text-muted-foreground">
+                  {error} (Set one guest to “Chief Guest”.)
+                </div>
+              ) : (
+                <table className="mx-auto border-collapse text-sm">
+                  <tbody>
+                    <tr>
+                      {arrangement.map((seatName, i) => {
+                        const baseName = seatName.startsWith("Spouse of ")
+                          ? seatName.slice("Spouse of ".length)
+                          : seatName;
+                        const guest = guestByName.get(baseName);
+                        const grad = guest?.gradationNo;
+
+                        return (
+                          <td key={i} className="border px-3 py-2 text-center tabular-nums">
+                            {typeof grad === "number" ? grad : ""}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    <tr>
+                      {serialNumbers.map((n, i) => {
+                        const isChief = chiefIndex === i;
+                        return (
+                          <td key={i} className="border px-3 py-2 text-center tabular-nums">
+                            {isChief ? (
+                              <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
+                            ) : n === 0 ? (
+                              ""
+                            ) : (
+                              n
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                    <tr>
+                      {arrangement.map((name, i) => (
+                        <td key={i} className="border px-3 py-2 text-center font-medium">
+                          {name}
                         </td>
-                      </tr>
-                    ) : (
-                      guests.map((g, idx) => (
-                        <tr key={g.id} className={cn("border-t", idx % 2 === 1 && "bg-muted/40")}>
-                          <td className="px-3 py-2 text-left tabular-nums">{idx + 1}</td>
-                          <td className="px-3 py-2 text-left font-medium">{g.name}</td>
-                          <td className="px-3 py-2 text-center">{g.bdNo}</td>
-                          <td className="px-3 py-2 text-center tabular-nums">{g.gradationNo ?? ""}</td>
-                          <td className="px-3 py-2 text-center">{g.dateCommission ?? ""}</td>
-                          <td className="px-3 py-2 text-center">{g.role}</td>
-                          <td className="px-3 py-2">
-                            <div className="flex items-center justify-center gap-2">
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant={g.spousePosition === "Before" ? "secondary" : "outline"}
-                                onClick={() => toggleSpouse(g.id, g.spousePosition === "Before" ? "N/A" : "Before")}
-                              >
-                                Before
-                              </Button>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant={g.spousePosition === "After" ? "secondary" : "outline"}
-                                onClick={() => toggleSpouse(g.id, g.spousePosition === "After" ? "N/A" : "After")}
-                              >
-                                After
-                              </Button>
-                            </div>
-                          </td>
-                          <td className="px-3 py-2">
-                            <div className="flex items-center justify-center gap-2">
-                              <Button type="button" size="icon" variant="outline" onClick={() => setEditingId(g.id)}>
-                                <Pencil />
-                                <span className="sr-only">Edit</span>
-                              </Button>
-                              <Button type="button" size="icon" variant="destructive" onClick={() => handleDeleteGuest(g.id)}>
-                                <Trash2 />
-                                <span className="sr-only">Delete</span>
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )}
+                      ))}
+                    </tr>
                   </tbody>
                 </table>
-              </div>
-            </CardContent>
-          </Card>
+              )}
+            </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Seating plan</CardTitle>
-              <CardDescription>Preview generated from your arrangement rules.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-                <div className="w-full max-w-md space-y-2">
-                  <Label htmlFor="planTitle">Enter the title</Label>
-                  <Input id="planTitle" value={title} onChange={(e) => setTitle(e.target.value)} />
-                </div>
+            <p className="text-xs text-muted-foreground">Data is automatically saved to the backend and synced across sessions.</p>
+          </CardContent>
+        </Card>
 
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <Button variant="outline" onClick={handleSaveAsImage} disabled={!!error || exporting || exportingPdf}>
-                    <Download /> {exporting ? "Saving..." : "Save as image"}
-                  </Button>
-
-                  <div className="flex items-center gap-2">
-                    <Select value={pdfPaper} onValueChange={(v) => setPdfPaper(v as "a4" | "letter")}>
-                      <SelectTrigger className="w-[110px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="a4">A4</SelectItem>
-                        <SelectItem value="letter">Letter</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Select value={pdfMargin} onValueChange={(v) => setPdfMargin(v as "none" | "small" | "normal" | "large")}>
-                      <SelectTrigger className="w-[140px]">
-                        <SelectValue placeholder="Margins" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No margins</SelectItem>
-                        <SelectItem value="small">Small</SelectItem>
-                        <SelectItem value="normal">Normal</SelectItem>
-                        <SelectItem value="large">Large</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Button variant="outline" onClick={handleExportPdf} disabled={!!error || exporting || exportingPdf}>
-                      <Download /> {exportingPdf ? "Exporting..." : "Export PDF"}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div
-                ref={planRef}
-                className="overflow-x-auto rounded-lg border bg-card p-5"
-                aria-label="Seating plan preview"
-              >
-                <h2 className="mb-4 text-center text-lg font-semibold">{title || "Seating Plan"}</h2>
-
-                {error ? (
-                  <div className="rounded-lg border bg-muted p-4 text-sm text-muted-foreground">
-                    {error} (Set one guest to “Chief Guest”.)
-                  </div>
-                ) : (
-                  <table className="mx-auto border-collapse text-sm">
-                    <tbody>
-                      <tr>
-                        {arrangement.map((seatName, i) => {
-                          const baseName = seatName.startsWith("Spouse of ") ? seatName.slice("Spouse of ".length) : seatName;
-                          const guest = guestByName.get(baseName);
-                          const grad = guest?.gradationNo;
-
-                          return (
-                            <td key={i} className="border px-3 py-2 text-center tabular-nums">
-                              {typeof grad === "number" ? grad : ""}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                      <tr>
-                        {serialNumbers.map((n, i) => {
-                          const isChief = chiefIndex === i;
-                          return (
-                            <td key={i} className="border px-3 py-2 text-center tabular-nums">
-                              {isChief ? (
-                                <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
-                              ) : n === 0 ? (
-                                ""
-                              ) : (
-                                n
-                              )}
-                            </td>
-                          );
-                        })}
-                      </tr>
-                      <tr>
-                        {arrangement.map((name, i) => (
-                          <td key={i} className="border px-3 py-2 text-center font-medium">
-                            {name}
-                          </td>
-                        ))}
-                      </tr>
-                    </tbody>
-                  </table>
-                )}
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                Data is automatically saved to the backend and synced across sessions.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
       </main>
     </div>
   );
