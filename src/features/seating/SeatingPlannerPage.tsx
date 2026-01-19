@@ -46,15 +46,15 @@ export default function SeatingPlannerPage() {
 
   const cellSizeClass = React.useMemo(() => {
     const map = {
-      small: { cell: "w-24 max-w-24 min-w-24 px-2 py-2 text-xs", name: "w-24 max-w-24 min-w-24 px-2 py-3 text-xs" },
-      medium: { cell: "w-32 max-w-32 min-w-32 px-3 py-2 text-sm", name: "w-32 max-w-32 min-w-32 px-3 py-3 text-sm" },
-      large: { cell: "w-40 max-w-40 min-w-40 px-4 py-3 text-sm", name: "w-40 max-w-40 min-w-40 px-4 py-4 text-sm" },
+      small: { cell: "w-24 max-w-24 min-w-24 px-1 py-1 text-xs", name: "w-24 max-w-24 min-w-24 px-1 py-1 text-xs" },
+      medium: { cell: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm", name: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm" },
+      large: { cell: "w-40 max-w-40 min-w-40 px-2 py-1.5 text-sm", name: "w-40 max-w-40 min-w-40 px-2 py-1.5 text-sm" },
     } as const;
     return map[cellSize];
   }, [cellSize]);
 
   const exportCellClass = React.useMemo(
-    () => ({ cell: "w-32 max-w-32 min-w-32 px-3 py-2 text-sm", name: "w-32 max-w-32 min-w-32 px-3 py-3 text-sm" }),
+    () => ({ cell: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm", name: "w-32 max-w-32 min-w-32 px-1.5 py-1 text-sm" }),
     [],
   );
 
