@@ -58,6 +58,36 @@ export default function SeatingPlannerPage() {
     [],
   );
 
+  const renderTwoLineName = React.useCallback((raw: string) => {
+    const name = raw.trim();
+    if (!name) return null;
+
+    // Prefer breaking after a meaningful first token (e.g., "AOC", "Spouse of")
+    if (name.startsWith("Spouse of ")) {
+      const rest = name.slice("Spouse of ".length).trim();
+      return (
+        <>
+          <span className="block">Spouse of</span>
+          <span className="block">{rest}</span>
+        </>
+      );
+    }
+
+    const firstSpace = name.indexOf(" ");
+    if (firstSpace === -1) return <span className="block">{name}</span>;
+
+    const first = name.slice(0, firstSpace);
+    const rest = name.slice(firstSpace + 1);
+
+    return (
+      <>
+        <span className="block">{first}</span>
+        <span className="block">{rest}</span>
+      </>
+    );
+  }, []);
+
+
   const editingGuest = React.useMemo(
     () => (editingId ? guests.find((g) => g.id === editingId) ?? null : null),
     [editingId, guests],
@@ -598,7 +628,7 @@ export default function SeatingPlannerPage() {
                               exportCellClass.name,
                             )}
                           >
-                            {name}
+                            {renderTwoLineName(name)}
                           </td>
                         ))}
                       </tr>
@@ -659,7 +689,7 @@ export default function SeatingPlannerPage() {
                               cellSizeClass.name,
                             )}
                           >
-                            {name}
+                            {renderTwoLineName(name)}
                           </td>
                         ))}
                       </tr>
