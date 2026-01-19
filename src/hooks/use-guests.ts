@@ -43,11 +43,14 @@ export function useGuests() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "guests" },
-        () => {
+        (payload) => {
+          console.log("Realtime event:", payload);
           fetchGuests();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log("Subscription status:", status);
+      });
 
     return () => {
       supabase.removeChannel(channel);
