@@ -40,8 +40,23 @@ export default function SeatingPlannerPage() {
   const [exportingPdf, setExportingPdf] = React.useState(false);
   const [pdfPaper, setPdfPaper] = React.useState<"a4" | "letter">("a4");
   const [pdfMargin, setPdfMargin] = React.useState<"none" | "small" | "normal" | "large">("normal");
+  const [cellSize, setCellSize] = React.useState<"small" | "medium" | "large">("medium");
 
   const planExportRef = React.useRef<HTMLDivElement | null>(null);
+
+  const cellSizeClass = React.useMemo(() => {
+    const map = {
+      small: { cell: "w-24 max-w-24 min-w-24 px-2 py-2 text-xs", name: "w-24 max-w-24 min-w-24 px-2 py-3 text-xs" },
+      medium: { cell: "w-32 max-w-32 min-w-32 px-3 py-2 text-sm", name: "w-32 max-w-32 min-w-32 px-3 py-3 text-sm" },
+      large: { cell: "w-40 max-w-40 min-w-40 px-4 py-3 text-sm", name: "w-40 max-w-40 min-w-40 px-4 py-4 text-sm" },
+    } as const;
+    return map[cellSize];
+  }, [cellSize]);
+
+  const exportCellClass = React.useMemo(
+    () => ({ cell: "w-32 max-w-32 min-w-32 px-3 py-2 text-sm", name: "w-32 max-w-32 min-w-32 px-3 py-3 text-sm" }),
+    [],
+  );
 
   const editingGuest = React.useMemo(
     () => (editingId ? guests.find((g) => g.id === editingId) ?? null : null),
@@ -488,7 +503,18 @@ export default function SeatingPlannerPage() {
                   <Download /> {exporting ? "Saving..." : "Save as image"}
                 </Button>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Select value={cellSize} onValueChange={(v) => setCellSize(v as "small" | "medium" | "large")}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="Cell size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="small">Cell: Small</SelectItem>
+                      <SelectItem value="medium">Cell: Medium</SelectItem>
+                      <SelectItem value="large">Cell: Large</SelectItem>
+                    </SelectContent>
+                  </Select>
+
                   <Select value={pdfPaper} onValueChange={(v) => setPdfPaper(v as "a4" | "letter")}>
                     <SelectTrigger className="w-[110px]">
                       <SelectValue />
@@ -499,10 +525,7 @@ export default function SeatingPlannerPage() {
                     </SelectContent>
                   </Select>
 
-                  <Select
-                    value={pdfMargin}
-                    onValueChange={(v) => setPdfMargin(v as "none" | "small" | "normal" | "large")}
-                  >
+                  <Select value={pdfMargin} onValueChange={(v) => setPdfMargin(v as "none" | "small" | "normal" | "large")}>
                     <SelectTrigger className="w-[140px]">
                       <SelectValue placeholder="Margins" />
                     </SelectTrigger>
@@ -523,10 +546,8 @@ export default function SeatingPlannerPage() {
 
             <Separator />
 
-            <div
-              className="overflow-x-auto rounded-lg border bg-card p-5"
-              aria-label="Seating plan preview"
-            >
+            {/* Export-only render (fixed Medium cell size) */}
+            <div className="fixed -left-[10000px] top-0 bg-background p-5" aria-hidden="true">
               <div ref={planExportRef} className="inline-block min-w-max">
                 <h2 className="mb-4 text-center text-lg font-semibold">{title || "Seating Plan"}</h2>
 
@@ -535,7 +556,7 @@ export default function SeatingPlannerPage() {
                     {error} (Set one guest to “Chief Guest”.)
                   </div>
                 ) : (
-                  <table className="border-collapse text-sm">
+                  <table className="border-collapse">
                     <tbody>
                       <tr>
                         {arrangement.map((seatName, i) => {
@@ -546,7 +567,7 @@ export default function SeatingPlannerPage() {
                           const grad = guest?.gradationNo;
 
                           return (
-                            <td key={i} className="border px-3 py-2 text-center tabular-nums min-w-28">
+                            <td key={i} className={cn("border text-center tabular-nums align-top", exportCellClass.cell)}>
                               {typeof grad === "number" ? grad : ""}
                             </td>
                           );
@@ -556,7 +577,7 @@ export default function SeatingPlannerPage() {
                         {serialNumbers.map((n, i) => {
                           const isChief = chiefIndex === i;
                           return (
-                            <td key={i} className="border px-3 py-2 text-center tabular-nums min-w-28">
+                            <td key={i} className={cn("border text-center tabular-nums align-top", exportCellClass.cell)}>
                               {isChief ? (
                                 <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
                               ) : n === 0 ? (
@@ -572,7 +593,71 @@ export default function SeatingPlannerPage() {
                         {arrangement.map((name, i) => (
                           <td
                             key={i}
-                            className="border px-3 py-3 text-center font-medium min-w-28 whitespace-normal break-words"
+                            className={cn(
+                              "border text-center font-medium align-top whitespace-normal break-words",
+                              exportCellClass.name,
+                            )}
+                          >
+                            {name}
+                          </td>
+                        ))}
+                      </tr>
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+
+            <div className="overflow-x-auto rounded-lg border bg-card p-5" aria-label="Seating plan preview">
+              <div className="inline-block min-w-max">
+                <h2 className="mb-4 text-center text-lg font-semibold">{title || "Seating Plan"}</h2>
+
+                {error ? (
+                  <div className="rounded-lg border bg-muted p-4 text-sm text-muted-foreground">
+                    {error} (Set one guest to “Chief Guest”.)
+                  </div>
+                ) : (
+                  <table className="border-collapse">
+                    <tbody>
+                      <tr>
+                        {arrangement.map((seatName, i) => {
+                          const baseName = seatName.startsWith("Spouse of ")
+                            ? seatName.slice("Spouse of ".length)
+                            : seatName;
+                          const guest = guestByName.get(baseName);
+                          const grad = guest?.gradationNo;
+
+                          return (
+                            <td key={i} className={cn("border text-center tabular-nums align-top", cellSizeClass.cell)}>
+                              {typeof grad === "number" ? grad : ""}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                      <tr>
+                        {serialNumbers.map((n, i) => {
+                          const isChief = chiefIndex === i;
+                          return (
+                            <td key={i} className={cn("border text-center tabular-nums align-top", cellSizeClass.cell)}>
+                              {isChief ? (
+                                <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
+                              ) : n === 0 ? (
+                                ""
+                              ) : (
+                                n
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                      <tr>
+                        {arrangement.map((name, i) => (
+                          <td
+                            key={i}
+                            className={cn(
+                              "border text-center font-medium align-top whitespace-normal break-words",
+                              cellSizeClass.name,
+                            )}
                           >
                             {name}
                           </td>
