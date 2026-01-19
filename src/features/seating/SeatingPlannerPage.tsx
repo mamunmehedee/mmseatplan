@@ -49,9 +49,9 @@ export default function SeatingPlannerPage() {
   const cellSizeClass = React.useMemo(() => {
     const padding = compactMode
       ? {
-          small: { cell: "px-0.5 py-0.5", name: "px-0.5 py-0.5" },
-          medium: { cell: "px-0.5 py-0.5", name: "px-0.5 py-0.5" },
-          large: { cell: "px-1 py-1", name: "px-1 py-1" },
+          small: { cell: "px-0 py-0.5", name: "px-0 py-0.5" },
+          medium: { cell: "px-0 py-0.5", name: "px-0 py-0.5" },
+          large: { cell: "px-0.5 py-0.5", name: "px-0.5 py-0.5" },
         }
       : {
           small: { cell: "px-2 py-1.5", name: "px-2 py-2" },
@@ -61,9 +61,9 @@ export default function SeatingPlannerPage() {
 
     const widths = compactMode
       ? {
-          small: "w-20 max-w-20 min-w-20",
-          medium: "w-28 max-w-28 min-w-28",
-          large: "w-36 max-w-36 min-w-36",
+          small: "w-16 max-w-16 min-w-16",
+          medium: "w-24 max-w-24 min-w-24",
+          large: "w-32 max-w-32 min-w-32",
         }
       : {
           small: "w-24 max-w-24 min-w-24",
