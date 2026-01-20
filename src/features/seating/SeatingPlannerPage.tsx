@@ -253,7 +253,7 @@ export default function SeatingPlannerPage() {
       bdNo: form.bdNo.trim(),
       dateCommission: form.dateCommission || "",
       gradationNo:
-        role === "Regular" || (role === "Custom" && form.gradationNo !== undefined)
+        role === "Regular" || role === "Chief Guest" || (role === "Custom" && form.gradationNo !== undefined)
           ? Number.isFinite(form.gradationNo as number)
             ? Number(form.gradationNo)
             : undefined
@@ -263,7 +263,11 @@ export default function SeatingPlannerPage() {
     };
 
     if (!cleaned.name) return;
-    if (role === "Regular" && (cleaned.gradationNo === undefined || Number.isNaN(cleaned.gradationNo))) return;
+    if (
+      (role === "Regular" || role === "Chief Guest") &&
+      (cleaned.gradationNo === undefined || Number.isNaN(cleaned.gradationNo))
+    )
+      return;
 
     await upsertGuest(cleaned);
   };
@@ -341,7 +345,7 @@ export default function SeatingPlannerPage() {
                         gradationNo: e.target.value === "" ? undefined : Number(e.target.value),
                       }))
                     }
-                    required={form.role === "Regular"}
+                    required={form.role === "Regular" || form.role === "Chief Guest"}
                   />
                 </div>
               </div>
