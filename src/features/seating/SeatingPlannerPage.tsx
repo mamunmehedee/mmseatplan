@@ -152,16 +152,17 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     const padding =
       tier === "compact"
         ? {
-            small: { cell: "px-0 py-0.5", name: "px-0 py-0.5" },
-            medium: { cell: "px-0 py-0.5", name: "px-0 py-0.5" },
-            large: { cell: "px-0.5 py-0.5", name: "px-0.5 py-0.5" },
+            // Ensure text doesn't touch borders – add breathing room on all sides.
+            small: { cell: "px-1 py-1", name: "px-1 py-1" },
+            medium: { cell: "px-1 py-1", name: "px-1 py-1" },
+            large: { cell: "px-1.5 py-1", name: "px-1.5 py-1" },
           }
         : tier === "ultra"
           ? {
-              // Keep the cell tight, but add a touch of vertical breathing room for vertical text.
-              small: { cell: "px-0 py-0", name: "px-0 py-0.5" },
-              medium: { cell: "px-0 py-0", name: "px-0 py-0.5" },
-              large: { cell: "px-0 py-0", name: "px-0 py-0.5" },
+              // Vertical text needs slight padding to avoid clipping at borders.
+              small: { cell: "px-0.5 py-1", name: "px-0.5 py-1" },
+              medium: { cell: "px-0.5 py-1", name: "px-0.5 py-1" },
+              large: { cell: "px-1 py-1", name: "px-1 py-1" },
             }
           : {
               small: { cell: "px-2 py-1.5", name: "px-2 py-2" },
