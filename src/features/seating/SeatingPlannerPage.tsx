@@ -247,17 +247,17 @@ export default function SeatingPlannerPage() {
     e.preventDefault();
 
     const role: GuestRole = form.role;
-    const gradationNo = Number.isFinite(form.gradationNo as number)
-      ? Number(form.gradationNo)
-      : undefined;
-
     const cleaned: Omit<Guest, "id"> = {
       ...form,
       name: form.name.trim(),
       bdNo: form.bdNo.trim(),
       dateCommission: form.dateCommission || "",
-      // Keep gradation no for ALL roles if the user provided it (incl. Chief Guest)
-      gradationNo,
+      gradationNo:
+        role === "Regular" || (role === "Custom" && form.gradationNo !== undefined)
+          ? Number.isFinite(form.gradationNo as number)
+            ? Number(form.gradationNo)
+            : undefined
+          : undefined,
       referenceId: role === "Custom" ? form.referenceId : undefined,
       beforeAfter: role === "Custom" ? form.beforeAfter : undefined,
     };
