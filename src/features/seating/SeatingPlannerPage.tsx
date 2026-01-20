@@ -158,9 +158,10 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
           }
         : tier === "ultra"
           ? {
-              small: { cell: "px-0 py-0", name: "px-0 py-0" },
-              medium: { cell: "px-0 py-0", name: "px-0 py-0" },
-              large: { cell: "px-0 py-0", name: "px-0 py-0" },
+              // Keep the cell tight, but add a touch of vertical breathing room for vertical text.
+              small: { cell: "px-0 py-0", name: "px-0 py-0.5" },
+              medium: { cell: "px-0 py-0", name: "px-0 py-0.5" },
+              large: { cell: "px-0 py-0", name: "px-0 py-0.5" },
             }
           : {
               small: { cell: "px-2 py-1.5", name: "px-2 py-2" },
@@ -407,18 +408,49 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
       }
+      .toolbar {
+        position: sticky;
+        top: 0;
+        background: white;
+        padding: 10px 0;
+        margin-bottom: 8mm;
+        border-bottom: 1px solid #ddd;
+      }
+      .toolbar-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+      .meta { font-weight: 400; font-size: 12px; color: #444; }
+      .btn {
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: 700;
+        font-size: 14px;
+        padding: 8px 12px;
+        border: 1px solid #000;
+        background: #fff;
+        cursor: pointer;
+      }
       .wrap { display: flex; flex-wrap: wrap; gap: 8mm; align-items: flex-start; }
       .tag {
-        border: 1px solid hsl(0 0% 0%);
+        border: 1px solid #000;
         padding: 4mm 6mm;
         border-radius: 3mm;
         font-size: ${fontSize}px;
         line-height: 1.1;
         white-space: nowrap;
       }
+      @media print {
+        .toolbar { display: none; }
+      }
     </style>
   </head>
   <body>
+    <div class="toolbar">
+      <div class="toolbar-inner">
+        <div>
+          <div>Guest name tags</div>
+          <div class="meta">Tags: ${tagNames.length} • Font: ${fontSize}px • Tip: use Landscape if needed</div>
+        </div>
+        <button class="btn" onclick="window.print()">Print</button>
+      </div>
+    </div>
     <div class="wrap">
       ${tagNames
         .map((n) =>
@@ -430,11 +462,6 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
         .map((safe) => `<div class="tag">${safe}</div>`)
         .join("\n")}
     </div>
-    <script>
-      window.addEventListener('load', () => {
-        setTimeout(() => window.print(), 50);
-      });
-    </script>
   </body>
 </html>`;
 
@@ -443,6 +470,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     win.document.open();
     win.document.write(html);
     win.document.close();
+    win.focus();
   }, [tagNames, tagsFontSize]);
 
   // Note: Print preview control intentionally omitted from the UI per request.
