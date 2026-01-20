@@ -1,10 +1,10 @@
 import AuthGate from "@/components/AuthGate";
-import SeatingPlannerPage from "@/features/seating/SeatingPlannerPage";
+import { Navigate } from "react-router-dom";
 
 const Index = () => {
   return (
     <AuthGate>
-      <SeatingPlannerPage />
+      <Navigate to="/dashboard" replace />
     </AuthGate>
   );
 };

@@ -2,15 +2,17 @@ import * as React from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Guest } from "@/features/seating/types";
 
-export function useGuests() {
+export function useGuests(projectId: string) {
   const [guests, setGuests] = React.useState<Guest[]>([]);
   const [loading, setLoading] = React.useState(true);
 
   const fetchGuests = React.useCallback(async () => {
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from("guests")
         .select("*")
+        .eq("project_id", projectId)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
@@ -33,32 +35,35 @@ export function useGuests() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [projectId]);
 
   React.useEffect(() => {
     fetchGuests();
 
     const channel = supabase
-      .channel("guests_changes")
+      .channel(`guests_changes_${projectId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "guests" },
-        (payload) => {
-          console.log("Realtime event:", payload);
+        {
+          event: "*",
+          schema: "public",
+          table: "guests",
+          filter: `project_id=eq.${projectId}`,
+        },
+        () => {
           fetchGuests();
-        }
+        },
       )
-      .subscribe((status) => {
-        console.log("Subscription status:", status);
-      });
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchGuests]);
+  }, [fetchGuests, projectId]);
 
   const addGuest = async (guest: Omit<Guest, "id">) => {
     const { error } = await supabase.from("guests").insert({
+      project_id: projectId,
       name: guest.name,
       bd_no: guest.bdNo,
       gradation_no: guest.gradationNo ?? null,
@@ -79,6 +84,7 @@ export function useGuests() {
     const { error } = await supabase
       .from("guests")
       .update({
+        project_id: projectId,
         name: guest.name,
         bd_no: guest.bdNo,
         gradation_no: guest.gradationNo ?? null,
