@@ -732,8 +732,8 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           const isSpouseSeat = seatName.startsWith("Spouse of ");
                           if (isSpouseSeat) {
                             return (
-                              <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
-                                {""}
+                              <td key={i} className={cn("border align-middle", cellSizeClass.cell)}>
+                                <div className="flex size-full items-center justify-center" />
                               </td>
                             );
                           }
@@ -742,8 +742,10 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           const grad = guest?.gradationNo;
 
                           return (
-                            <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
-                              {typeof grad === "number" ? grad : ""}
+                            <td key={i} className={cn("border align-middle", cellSizeClass.cell)}>
+                              <div className="flex size-full items-center justify-center tabular-nums">
+                                {typeof grad === "number" ? grad : ""}
+                              </div>
                             </td>
                           );
                         })}
@@ -753,14 +755,16 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           const isChief = chiefIndex === i;
 
                           return (
-                            <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
-                              {isChief ? (
-                                <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
-                              ) : n === 0 ? (
-                                ""
-                              ) : (
-                                n
-                              )}
+                            <td key={i} className={cn("border align-middle", cellSizeClass.cell)}>
+                              <div className="flex size-full items-center justify-center tabular-nums">
+                                {isChief ? (
+                                  <Armchair className="size-4 text-primary" aria-label="Royal chair" />
+                                ) : n === 0 ? (
+                                  ""
+                                ) : (
+                                  n
+                                )}
+                              </div>
                             </td>
                           );
                         })}
@@ -770,11 +774,13 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           <td
                             key={i}
                             className={cn(
-                              "border text-center font-medium align-middle whitespace-normal break-words",
+                              "border align-middle whitespace-normal break-words",
                               cellSizeClass.name,
                             )}
                           >
-                            {renderTwoLineName(name)}
+                            <div className="flex size-full flex-col items-center justify-center text-center leading-tight">
+                              {renderTwoLineName(name)}
+                            </div>
                           </td>
                         ))}
                       </tr>
@@ -800,8 +806,8 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           const isSpouseSeat = seatName.startsWith("Spouse of ");
                           if (isSpouseSeat) {
                             return (
-                              <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
-                                {""}
+                              <td key={i} className={cn("border align-middle", cellSizeClass.cell)}>
+                                <div className="flex size-full items-center justify-center" />
                               </td>
                             );
                           }
@@ -810,8 +816,10 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           const grad = guest?.gradationNo;
 
                           return (
-                            <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
-                              {typeof grad === "number" ? grad : ""}
+                            <td key={i} className={cn("border align-middle", cellSizeClass.cell)}>
+                              <div className="flex size-full items-center justify-center tabular-nums">
+                                {typeof grad === "number" ? grad : ""}
+                              </div>
                             </td>
                           );
                         })}
@@ -821,14 +829,16 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           const isChief = chiefIndex === i;
 
                           return (
-                            <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
-                              {isChief ? (
-                                <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
-                              ) : n === 0 ? (
-                                ""
-                              ) : (
-                                n
-                              )}
+                            <td key={i} className={cn("border align-middle", cellSizeClass.cell)}>
+                              <div className="flex size-full items-center justify-center tabular-nums">
+                                {isChief ? (
+                                  <Armchair className="size-4 text-primary" aria-label="Royal chair" />
+                                ) : n === 0 ? (
+                                  ""
+                                ) : (
+                                  n
+                                )}
+                              </div>
                             </td>
                           );
                         })}
@@ -837,12 +847,14 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                         {arrangement.map((name, i) => (
                           <td
                             key={i}
-                             className={cn(
-                               "border text-center font-medium align-middle whitespace-normal break-words",
-                               cellSizeClass.name,
-                             )}
+                            className={cn(
+                              "border align-middle whitespace-normal break-words",
+                              cellSizeClass.name,
+                            )}
                           >
-                            {renderTwoLineName(name)}
+                            <div className="flex size-full flex-col items-center justify-center text-center leading-tight">
+                              {renderTwoLineName(name)}
+                            </div>
                           </td>
                         ))}
                       </tr>
