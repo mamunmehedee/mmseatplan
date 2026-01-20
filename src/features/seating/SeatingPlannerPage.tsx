@@ -823,7 +823,14 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                             )}
                           >
                             <div
-                              className="flex size-full flex-col items-center justify-center text-center leading-tight"
+                              className={cn(
+                                "size-full text-center",
+                                compactTier === "ultra"
+                                  ? // In ultra mode, avoid vertical centering which creates visible top/bottom gaps.
+                                    // Keep it tight and pinned to the start.
+                                    "flex items-center justify-start leading-none"
+                                  : "flex flex-col items-center justify-center leading-tight",
+                              )}
                               style={
                                 compactTier === "ultra"
                                   ? ({ writingMode: "vertical-rl", textOrientation: "mixed" } as React.CSSProperties)
@@ -904,7 +911,12 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                             )}
                           >
                             <div
-                              className="flex size-full flex-col items-center justify-center text-center leading-tight"
+                              className={cn(
+                                "size-full text-center",
+                                compactTier === "ultra"
+                                  ? "flex items-center justify-start leading-none"
+                                  : "flex flex-col items-center justify-center leading-tight",
+                              )}
                               style={
                                 compactTier === "ultra"
                                   ? ({ writingMode: "vertical-rl", textOrientation: "mixed" } as React.CSSProperties)
