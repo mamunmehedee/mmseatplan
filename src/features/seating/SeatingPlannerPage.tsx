@@ -49,6 +49,8 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
   // Compact density is now controlled by a slider (0–100).
   // We still persist the legacy boolean `compact_mode` for backwards compatibility.
   const [compactLevel, setCompactLevel] = React.useState<number>(0);
+  // Per-row height (vertical density) without changing widths.
+  const [rowHeight, setRowHeight] = React.useState<"normal" | "compact" | "ultra">("normal");
 
   const [projectLoading, setProjectLoading] = React.useState(true);
   const [savingProject, setSavingProject] = React.useState(false);
@@ -198,6 +200,29 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     () => (compactLevel >= 67 ? "ultra" : compactLevel >= 34 ? "compact" : "normal"),
     [compactLevel],
   );
+
+  const rowHeightClass = React.useMemo(() => {
+    const heights =
+      rowHeight === "compact"
+        ? {
+            small: "h-12 min-h-12",
+            medium: "h-14 min-h-14",
+            large: "h-16 min-h-16",
+          }
+        : rowHeight === "ultra"
+          ? {
+              small: "h-10 min-h-10",
+              medium: "h-11 min-h-11",
+              large: "h-12 min-h-12",
+            }
+          : {
+              small: "h-16 min-h-16",
+              medium: "h-20 min-h-20",
+              large: "h-24 min-h-24",
+            };
+
+    return heights[cellSize];
+  }, [cellSize, rowHeight]);
 
   const renderTwoLineName = React.useCallback((raw: string) => {
     const name = raw.trim();
@@ -703,7 +728,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
 
               {/* Row 2 */}
               <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
-                <div className="md:col-span-5">
+                <div className="md:col-span-4">
                   <div className="rounded-md border bg-card px-3 py-2">
                     <div className="flex items-center justify-between gap-3">
                       <Label className="text-sm">Compact</Label>
@@ -724,7 +749,20 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                   </div>
                 </div>
 
-                <div className="md:col-span-3">
+                <div className="md:col-span-2">
+                  <Select value={rowHeight} onValueChange={(v) => setRowHeight(v as typeof rowHeight)}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Row height" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="normal">Row: Normal</SelectItem>
+                      <SelectItem value="compact">Row: Compact</SelectItem>
+                      <SelectItem value="ultra">Row: Ultra</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-2">
                   <Select value={cellSize} onValueChange={(v) => setCellSize(v as "small" | "medium" | "large")}>
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Cell size" />
@@ -786,7 +824,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           const grad = guest?.gradationNo;
 
                           return (
-                            <td key={i} className={cn("border align-middle", cellSizeClass.cell)}>
+                              <td key={i} className={cn("border align-middle", cellSizeClass.cell, rowHeightClass)}>
                               <div className="flex size-full items-center justify-center tabular-nums">
                                 {typeof grad === "number" ? grad : ""}
                               </div>
@@ -799,7 +837,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           const isChief = chiefIndex === i;
 
                           return (
-                            <td key={i} className={cn("border align-middle", cellSizeClass.cell)}>
+                            <td key={i} className={cn("border align-middle", cellSizeClass.cell, rowHeightClass)}>
                               <div className="flex size-full items-center justify-center tabular-nums">
                                 {isChief ? (
                                   <Armchair className="size-4 text-primary" aria-label="Royal chair" />
@@ -820,6 +858,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                             className={cn(
                               "border align-middle whitespace-normal break-words",
                               cellSizeClass.name,
+                              rowHeightClass,
                             )}
                           >
                             <div
@@ -874,7 +913,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           const grad = guest?.gradationNo;
 
                           return (
-                            <td key={i} className={cn("border align-middle", cellSizeClass.cell)}>
+                             <td key={i} className={cn("border align-middle", cellSizeClass.cell, rowHeightClass)}>
                               <div className="flex size-full items-center justify-center tabular-nums">
                                 {typeof grad === "number" ? grad : ""}
                               </div>
@@ -887,7 +926,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           const isChief = chiefIndex === i;
 
                           return (
-                            <td key={i} className={cn("border align-middle", cellSizeClass.cell)}>
+                            <td key={i} className={cn("border align-middle", cellSizeClass.cell, rowHeightClass)}>
                               <div className="flex size-full items-center justify-center tabular-nums">
                                 {isChief ? (
                                   <Armchair className="size-4 text-primary" aria-label="Royal chair" />
@@ -908,6 +947,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                             className={cn(
                               "border align-middle whitespace-normal break-words",
                               cellSizeClass.name,
+                              rowHeightClass,
                             )}
                           >
                             <div
