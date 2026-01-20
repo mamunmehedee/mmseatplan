@@ -302,9 +302,6 @@ export default function SeatingPlannerPage() {
             </div>
           </div>
 
-          <Button onClick={() => setEditingId(null)}>
-            <Plus /> New guest
-          </Button>
         </div>
       </header>
 
