@@ -2,7 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
-import { Armchair, ArrowLeft, Download, Save, Trash2, Users, Pencil } from "lucide-react";
+import { Armchair, ArrowLeft, Download, Save, Trash2, Users, Pencil, Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +17,14 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import AccountMenu from "@/components/AccountMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -51,6 +59,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
   const [compactLevel, setCompactLevel] = React.useState<number>(0);
   // Per-row height (vertical density) without changing widths.
   const [rowHeight, setRowHeight] = React.useState<"normal" | "compact" | "ultra">("normal");
+  const [tagsFontSize, setTagsFontSize] = React.useState<number>(16);
 
   const [projectLoading, setProjectLoading] = React.useState(true);
   const [savingProject, setSavingProject] = React.useState(false);
@@ -285,6 +294,20 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     [guests, arrangement],
   );
 
+  const tagNames = React.useMemo(() => {
+    if (error) return [] as string[];
+    const seen = new Set<string>();
+    const names: string[] = [];
+    arrangement.forEach((n) => {
+      const name = n.trim();
+      if (!name) return;
+      if (seen.has(name)) return;
+      seen.add(name);
+      names.push(name);
+    });
+    return names;
+  }, [arrangement, error]);
+
   const referenceOptions = React.useMemo(() => guests.filter((g) => g.id !== editingId), [guests, editingId]);
 
   const guestByName = React.useMemo(() => {
@@ -363,6 +386,64 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
       setExportingPdf(false);
     }
   };
+
+  const handlePrintNameTags = React.useCallback(() => {
+    if (tagNames.length === 0) return;
+
+    const fontSize = Number.isFinite(tagsFontSize) ? Math.max(6, Math.min(72, tagsFontSize)) : 16;
+
+    const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Guest name tags</title>
+    <style>
+      @page { size: auto; margin: 12mm; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: 700;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .wrap { display: flex; flex-wrap: wrap; gap: 8mm; align-items: flex-start; }
+      .tag {
+        border: 1px solid hsl(0 0% 0%);
+        padding: 4mm 6mm;
+        border-radius: 3mm;
+        font-size: ${fontSize}px;
+        line-height: 1.1;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      ${tagNames
+        .map((n) =>
+          String(n)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;"),
+        )
+        .map((safe) => `<div class="tag">${safe}</div>`)
+        .join("\n")}
+    </div>
+    <script>
+      window.addEventListener('load', () => {
+        setTimeout(() => window.print(), 50);
+      });
+    </script>
+  </body>
+</html>`;
+
+    const win = window.open("", "_blank", "noopener,noreferrer");
+    if (!win) return;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  }, [tagNames, tagsFontSize]);
 
   // Note: Print preview control intentionally omitted from the UI per request.
 
@@ -723,6 +804,45 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                   >
                     <Download className="mr-2 size-4" /> {exporting ? "Saving..." : "Save as image"}
                   </Button>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" disabled={tagNames.length === 0}>
+                        <Printer className="mr-2 size-4" /> Print tags
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Print guest name tags</DialogTitle>
+                        <DialogDescription>
+                          Prints all names from the current seating arrangement as Arial Bold tags with a black border.
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <div className="grid gap-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="tagsFont">Font size (px)</Label>
+                          <Input
+                            id="tagsFont"
+                            type="number"
+                            min={6}
+                            max={72}
+                            value={tagsFontSize}
+                            onChange={(e) => setTagsFontSize(Number(e.target.value))}
+                          />
+                        </div>
+
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="text-sm text-muted-foreground">
+                            Total tags: <span className="tabular-nums">{tagNames.length}</span>
+                          </p>
+                          <Button onClick={handlePrintNameTags}>
+                            <Printer className="mr-2 size-4" /> Print
+                          </Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </div>
 
