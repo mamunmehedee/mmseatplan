@@ -699,10 +699,16 @@ export default function SeatingPlannerPage() {
                     <tbody>
                       <tr>
                         {arrangement.map((seatName, i) => {
-                          const baseName = seatName.startsWith("Spouse of ")
-                            ? seatName.slice("Spouse of ".length)
-                            : seatName;
-                          const guest = guestByName.get(baseName);
+                          const isSpouseSeat = seatName.startsWith("Spouse of ");
+                          if (isSpouseSeat) {
+                            return (
+                              <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
+                                {""}
+                              </td>
+                            );
+                          }
+
+                          const guest = guestByName.get(seatName);
                           const grad = guest?.gradationNo;
 
                           return (
@@ -715,10 +721,14 @@ export default function SeatingPlannerPage() {
                       <tr>
                         {serialNumbers.map((n, i) => {
                           const isChief = chiefIndex === i;
+                          const isSpouseSeat = arrangement[i]?.startsWith("Spouse of ") ?? false;
+
                           return (
                             <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
                               {isChief ? (
                                 <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
+                              ) : isSpouseSeat ? (
+                                ""
                               ) : n === 0 ? (
                                 ""
                               ) : (
@@ -760,32 +770,42 @@ export default function SeatingPlannerPage() {
                     <tbody>
                       <tr>
                         {arrangement.map((seatName, i) => {
-                          const baseName = seatName.startsWith("Spouse of ")
-                            ? seatName.slice("Spouse of ".length)
-                            : seatName;
-                          const guest = guestByName.get(baseName);
+                          const isSpouseSeat = seatName.startsWith("Spouse of ");
+                          if (isSpouseSeat) {
+                            return (
+                              <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
+                                {""}
+                              </td>
+                            );
+                          }
+
+                          const guest = guestByName.get(seatName);
                           const grad = guest?.gradationNo;
 
                           return (
-                             <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
-                               {typeof grad === "number" ? grad : ""}
-                             </td>
+                            <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
+                              {typeof grad === "number" ? grad : ""}
+                            </td>
                           );
                         })}
                       </tr>
                       <tr>
                         {serialNumbers.map((n, i) => {
                           const isChief = chiefIndex === i;
+                          const isSpouseSeat = arrangement[i]?.startsWith("Spouse of ") ?? false;
+
                           return (
-                             <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
-                               {isChief ? (
-                                 <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
-                               ) : n === 0 ? (
-                                 ""
-                               ) : (
-                                 n
-                               )}
-                             </td>
+                            <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
+                              {isChief ? (
+                                <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
+                              ) : isSpouseSeat ? (
+                                ""
+                              ) : n === 0 ? (
+                                ""
+                              ) : (
+                                n
+                              )}
+                            </td>
                           );
                         })}
                       </tr>
