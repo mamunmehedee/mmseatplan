@@ -11,6 +11,7 @@ export function useSeatProjects() {
   const [projects, setProjects] = React.useState<SeatProjectListItem[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [creating, setCreating] = React.useState(false);
+  const [deletingId, setDeletingId] = React.useState<string | null>(null);
 
   const fetchProjects = React.useCallback(async () => {
     setLoading(true);
@@ -84,10 +85,24 @@ export function useSeatProjects() {
     }
   }, []);
 
+  const deleteProject = React.useCallback(async (id: string) => {
+    setDeletingId(id);
+    try {
+      const { error } = await supabase.from("seating_projects").delete().eq("id", id);
+      if (error) throw error;
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setDeletingId(null);
+    }
+  }, []);
+
   return {
     projects,
     loading,
     creating,
+    deletingId,
     createProject,
+    deleteProject,
   };
 }
