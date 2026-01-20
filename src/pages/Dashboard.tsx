@@ -1,17 +1,28 @@
 import * as React from "react";
-import { Plus, LayoutGrid } from "lucide-react";
+import { Plus, LayoutGrid, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import AuthGate from "@/components/AuthGate";
 import AccountMenu from "@/components/AccountMenu";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import { useSeatProjects } from "@/hooks/use-seat-projects";
 
 function DashboardInner() {
   const navigate = useNavigate();
-  const { projects, loading, creating, createProject } = useSeatProjects();
+  const { projects, loading, creating, deletingId, createProject, deleteProject } = useSeatProjects();
 
   const handleCreate = async () => {
     const id = await createProject();
@@ -40,7 +51,7 @@ function DashboardInner() {
         <div className="mx-auto max-w-6xl space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button onClick={handleCreate} disabled={creating}>
-              <Plus className="mr-2 size-4" /> {creating ? "Creating…" : "+ Add Seat Plan"}
+              <Plus className="mr-2 size-4" /> {creating ? "Creating…" : "Add Seat Plan"}
             </Button>
 
             <div className="flex items-center gap-3 overflow-x-auto pb-2">
@@ -50,18 +61,61 @@ function DashboardInner() {
                 <span className="text-sm text-muted-foreground">No saved plans yet.</span>
               ) : (
                 projects.map((p) => (
-                  <button
+                  <div
                     key={p.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() => navigate(`/projects/${p.id}`)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") navigate(`/projects/${p.id}`);
+                    }}
                     className={cn(
                       "shrink-0 rounded-md border bg-card px-3 py-2 text-left",
                       "hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-ring",
                     )}
                   >
-                    <div className="max-w-[220px] truncate text-sm font-medium">{p.title}</div>
-                    <div className="text-xs text-muted-foreground">Updated {new Date(p.updatedAt).toLocaleString()}</div>
-                  </button>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="max-w-[220px] truncate text-sm font-medium">{p.title}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Updated {new Date(p.updatedAt).toLocaleString()}
+                        </div>
+                      </div>
+
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            aria-label={`Delete ${p.title}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete seat plan?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will delete “{p.title}” and its guests. This action can’t be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={async () => {
+                                await deleteProject(p.id);
+                              }}
+                              disabled={deletingId === p.id}
+                            >
+                              {deletingId === p.id ? "Deleting…" : "Delete"}
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
                 ))
               )}
             </div>

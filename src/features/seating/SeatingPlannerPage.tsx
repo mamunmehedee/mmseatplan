@@ -1,7 +1,8 @@
 import * as React from "react";
+import { Link } from "react-router-dom";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
-import { Armchair, Download, Save, Trash2, Users, Pencil } from "lucide-react";
+import { Armchair, ArrowLeft, Download, Save, Trash2, Users, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -388,7 +389,15 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
               <p className="text-sm text-muted-foreground">Guests → arrangement → seating plan preview.</p>
             </div>
           </div>
-          <AccountMenu />
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+              <Link to="/dashboard">
+                <ArrowLeft className="mr-2 size-4" /> Back to Saved Seat Plans
+              </Link>
+            </Button>
+            <AccountMenu />
+          </div>
         </div>
       </header>
 
