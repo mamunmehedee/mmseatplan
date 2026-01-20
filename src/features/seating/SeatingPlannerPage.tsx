@@ -2,7 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
-import { Armchair, ArrowLeft, Download, Save, Trash2, Users, Pencil } from "lucide-react";
+import { Armchair, ArrowLeft, Download, Save, Trash2, Users, Pencil, Printer } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -311,6 +311,72 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
       console.error("Failed to export PDF", e);
     } finally {
       setExportingPdf(false);
+    }
+  };
+
+  const handlePrint = async () => {
+    if (!planExportRef.current) return;
+
+    // Open window first (helps avoid popup blockers), then fill it.
+    const printWindow = window.open("", "_blank", "noopener,noreferrer");
+    if (!printWindow) return;
+
+    const marginIn =
+      pdfMargin === "none" ? 0 : pdfMargin === "small" ? 0.25 : pdfMargin === "normal" ? 0.5 : 1;
+
+    const pageSizeCss = pdfPaper === "a4" ? "A4" : "Letter";
+
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${(title || "Seating Plan").trim().replace(/</g, "&lt;")}</title>
+    <style>
+      @page { size: ${pageSizeCss} landscape; margin: ${marginIn}in; }
+      html, body { height: 100%; }
+      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; }
+      .page { height: 100%; display: flex; align-items: center; justify-content: center; }
+      img { max-width: 100%; max-height: 100%; object-fit: contain; }
+      @media print { .no-print { display: none !important; } }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="no-print" style="padding:16px; color:#666;">Preparing print…</div>
+    </div>
+  </body>
+</html>`);
+    printWindow.document.close();
+
+    try {
+      const dataUrl = await toPng(planExportRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: "hsl(var(--background))",
+        skipFonts: true,
+      });
+
+      const page = printWindow.document.querySelector(".page");
+      if (page) {
+        page.innerHTML = `<img src="${dataUrl}" alt="${(title || "Seating Plan")
+          .trim()
+          .replace(/"/g, "&quot;")}" />`;
+      }
+
+      // Give the browser a tick to layout image before printing.
+      printWindow.focus();
+      window.setTimeout(() => {
+        printWindow.print();
+      }, 150);
+    } catch (e) {
+      console.error("Failed to prepare print", e);
+      try {
+        printWindow.close();
+      } catch {
+        // ignore
+      }
     }
   };
 
@@ -662,7 +728,11 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                 </Button>
 
                 <Button variant="outline" onClick={handleSaveAsImage} disabled={!!error || exporting || exportingPdf}>
-                  <Download /> {exporting ? "Saving..." : "Save as image"}
+                  <Download className="mr-2 size-4" /> {exporting ? "Saving..." : "Save as image"}
+                </Button>
+
+                <Button variant="outline" onClick={handlePrint} disabled={!!error || exporting || exportingPdf}>
+                  <Printer className="mr-2 size-4" /> Print
                 </Button>
 
                 <div className="flex flex-wrap items-center gap-2">
@@ -707,7 +777,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                   </Select>
 
                   <Button variant="outline" onClick={handleExportPdf} disabled={!!error || exporting || exportingPdf}>
-                    <Download /> {exportingPdf ? "Exporting..." : "Export PDF"}
+                    <Download className="mr-2 size-4" /> {exportingPdf ? "Exporting..." : "Export PDF"}
                   </Button>
                 </div>
               </div>
