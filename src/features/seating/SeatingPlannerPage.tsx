@@ -2,7 +2,7 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
-import { Armchair, ArrowLeft, Download, Save, Trash2, Users, Pencil, Printer } from "lucide-react";
+import { Armchair, ArrowLeft, Download, Save, Trash2, Users, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +43,8 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
   const [exporting, setExporting] = React.useState(false);
   const [exportingPdf, setExportingPdf] = React.useState(false);
   const [pdfPaper, setPdfPaper] = React.useState<"a4" | "letter">("a4");
-  const [pdfMargin, setPdfMargin] = React.useState<"none" | "small" | "normal" | "large">("normal");
+  // Margin selector intentionally omitted from the UI per request; keep a fixed default margin.
+  const pdfMarginPt = 36;
   const [cellSize, setCellSize] = React.useState<"small" | "medium" | "large">("medium");
   const [compactMode, setCompactMode] = React.useState(false);
 
@@ -268,8 +269,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
   const handleExportPdf = async () => {
     if (!planExportRef.current) return;
 
-    const marginPt =
-      pdfMargin === "none" ? 0 : pdfMargin === "small" ? 18 : pdfMargin === "normal" ? 36 : 72;
+    const marginPt = pdfMarginPt;
 
     try {
       setExportingPdf(true);
@@ -314,71 +314,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     }
   };
 
-  const handlePrint = async () => {
-    if (!planExportRef.current) return;
-
-    // Open window first (helps avoid popup blockers), then fill it.
-    const printWindow = window.open("", "_blank", "noopener,noreferrer");
-    if (!printWindow) return;
-
-    const marginIn =
-      pdfMargin === "none" ? 0 : pdfMargin === "small" ? 0.25 : pdfMargin === "normal" ? 0.5 : 1;
-
-    const pageSizeCss = pdfPaper === "a4" ? "A4" : "Letter";
-
-    printWindow.document.open();
-    printWindow.document.write(`<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>${(title || "Seating Plan").trim().replace(/</g, "&lt;")}</title>
-    <style>
-      @page { size: ${pageSizeCss} landscape; margin: ${marginIn}in; }
-      html, body { height: 100%; }
-      body { margin: 0; font-family: ui-sans-serif, system-ui, sans-serif; }
-      .page { height: 100%; display: flex; align-items: center; justify-content: center; }
-      img { max-width: 100%; max-height: 100%; object-fit: contain; }
-      @media print { .no-print { display: none !important; } }
-    </style>
-  </head>
-  <body>
-    <div class="page">
-      <div class="no-print" style="padding:16px; color:#666;">Preparing print…</div>
-    </div>
-  </body>
-</html>`);
-    printWindow.document.close();
-
-    try {
-      const dataUrl = await toPng(planExportRef.current, {
-        cacheBust: true,
-        pixelRatio: 2,
-        backgroundColor: "hsl(var(--background))",
-        skipFonts: true,
-      });
-
-      const page = printWindow.document.querySelector(".page");
-      if (page) {
-        page.innerHTML = `<img src="${dataUrl}" alt="${(title || "Seating Plan")
-          .trim()
-          .replace(/"/g, "&quot;")}" />`;
-      }
-
-      // Give the browser a tick to layout image before printing.
-      printWindow.focus();
-      window.setTimeout(() => {
-        printWindow.print();
-      }, 150);
-    } catch (e) {
-      console.error("Failed to prepare print", e);
-      try {
-        printWindow.close();
-      } catch {
-        // ignore
-      }
-    }
-  };
+  // Note: Print preview control intentionally omitted from the UI per request.
 
   const upsertGuest = async (payload: Omit<Guest, "id">) => {
     try {
@@ -712,74 +648,67 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
             <CardDescription>Preview generated from your arrangement rules.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div className="w-full max-w-md space-y-2">
-                <Label htmlFor="planTitle">Enter the title</Label>
-                <Input id="planTitle" value={title} onChange={(e) => setTitle(e.target.value)} />
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                <Button variant="outline" onClick={forceSaveProject} disabled={projectLoading || savingProject}>
-                  <Save className="mr-2 size-4" />
-                  {saveStatus === "saving" || savingProject
-                    ? "Saving…"
-                    : saveStatus === "error"
-                      ? "Retry save"
-                      : "Saved"}
-                </Button>
-
-                <Button variant="outline" onClick={handleSaveAsImage} disabled={!!error || exporting || exportingPdf}>
-                  <Download className="mr-2 size-4" /> {exporting ? "Saving..." : "Save as image"}
-                </Button>
-
-                <Button variant="outline" onClick={handlePrint} disabled={!!error || exporting || exportingPdf}>
-                  <Printer className="mr-2 size-4" /> Print
-                </Button>
+            <div className="flex flex-col gap-3">
+              {/* Row 1 */}
+              <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                <div className="w-full md:max-w-md space-y-2">
+                  <Label htmlFor="planTitle">Enter the title</Label>
+                  <Input id="planTitle" value={title} onChange={(e) => setTitle(e.target.value)} />
+                </div>
 
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2">
-                    <Switch id="compactMode" checked={compactMode} onCheckedChange={setCompactMode} />
-                    <Label htmlFor="compactMode" className="text-sm">
-                      Compact
-                    </Label>
-                  </div>
+                  <Button variant="outline" onClick={forceSaveProject} disabled={projectLoading || savingProject}>
+                    <Save className="mr-2 size-4" />
+                    {saveStatus === "saving" || savingProject
+                      ? "Saving…"
+                      : saveStatus === "error"
+                        ? "Retry save"
+                        : "Saved"}
+                  </Button>
 
-                  <Select value={cellSize} onValueChange={(v) => setCellSize(v as "small" | "medium" | "large")}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Cell size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="small">Cell: Small</SelectItem>
-                      <SelectItem value="medium">Cell: Medium</SelectItem>
-                      <SelectItem value="large">Cell: Large</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={pdfPaper} onValueChange={(v) => setPdfPaper(v as "a4" | "letter")}>
-                    <SelectTrigger className="w-[110px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="a4">A4</SelectItem>
-                      <SelectItem value="letter">Letter</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={pdfMargin} onValueChange={(v) => setPdfMargin(v as "none" | "small" | "normal" | "large")}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="Margins" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No margins</SelectItem>
-                      <SelectItem value="small">Small</SelectItem>
-                      <SelectItem value="normal">Normal</SelectItem>
-                      <SelectItem value="large">Large</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <Button variant="outline" onClick={handleExportPdf} disabled={!!error || exporting || exportingPdf}>
-                    <Download className="mr-2 size-4" /> {exportingPdf ? "Exporting..." : "Export PDF"}
+                  <Button
+                    variant="outline"
+                    onClick={handleSaveAsImage}
+                    disabled={!!error || exporting || exportingPdf}
+                  >
+                    <Download className="mr-2 size-4" /> {exporting ? "Saving..." : "Save as image"}
                   </Button>
                 </div>
+              </div>
+
+              {/* Row 2 */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2">
+                  <Switch id="compactMode" checked={compactMode} onCheckedChange={setCompactMode} />
+                  <Label htmlFor="compactMode" className="text-sm">
+                    Compact
+                  </Label>
+                </div>
+
+                <Select value={cellSize} onValueChange={(v) => setCellSize(v as "small" | "medium" | "large")}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Cell size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="small">Cell: Small</SelectItem>
+                    <SelectItem value="medium">Cell: Medium</SelectItem>
+                    <SelectItem value="large">Cell: Large</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={pdfPaper} onValueChange={(v) => setPdfPaper(v as "a4" | "letter")}>
+                  <SelectTrigger className="w-[110px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="a4">A4</SelectItem>
+                    <SelectItem value="letter">Letter</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Button variant="outline" onClick={handleExportPdf} disabled={!!error || exporting || exportingPdf}>
+                  <Download className="mr-2 size-4" /> {exportingPdf ? "Exporting..." : "Export PDF"}
+                </Button>
               </div>
             </div>
 
