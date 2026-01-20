@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
 import AccountMenu from "@/components/AccountMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -46,7 +46,9 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
   // Margin selector intentionally omitted from the UI per request; keep a fixed default margin.
   const pdfMarginPt = 36;
   const [cellSize, setCellSize] = React.useState<"small" | "medium" | "large">("medium");
-  const [compactMode, setCompactMode] = React.useState(false);
+  // Compact density is now controlled by a slider (0–100).
+  // We still persist the legacy boolean `compact_mode` for backwards compatibility.
+  const [compactLevel, setCompactLevel] = React.useState<number>(0);
 
   const [projectLoading, setProjectLoading] = React.useState(true);
   const [savingProject, setSavingProject] = React.useState(false);
@@ -72,7 +74,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
         initialLoadRef.current = true;
         setTitle(data.title ?? "Seating Plan");
         setCellSize((data.cell_size as "small" | "medium" | "large") ?? "medium");
-        setCompactMode(Boolean(data.compact_mode));
+        setCompactLevel(Boolean(data.compact_mode) ? 60 : 0);
         setSaveStatus("saved");
       } catch {
         if (!mounted) return;
@@ -96,6 +98,8 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
       setSavingProject(true);
       setSaveStatus("saving");
 
+      const compactMode = compactLevel >= 34;
+
       const { error } = await supabase
         .from("seating_projects")
         .update({
@@ -112,7 +116,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     } finally {
       setSavingProject(false);
     }
-  }, [cellSize, compactMode, projectId, title]);
+  }, [cellSize, compactLevel, projectId, title]);
 
   React.useEffect(() => {
     if (projectLoading) return;
@@ -127,34 +131,50 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     return () => {
       if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
     };
-  }, [cellSize, compactMode, forceSaveProject, projectLoading, title]);
+  }, [cellSize, compactLevel, forceSaveProject, projectLoading, title]);
 
   const planExportRef = React.useRef<HTMLDivElement | null>(null);
 
   const cellSizeClass = React.useMemo(() => {
-    const padding = compactMode
-      ? {
-          small: { cell: "px-0 py-0.5", name: "px-0 py-0.5" },
-          medium: { cell: "px-0 py-0.5", name: "px-0 py-0.5" },
-          large: { cell: "px-0.5 py-0.5", name: "px-0.5 py-0.5" },
-        }
-      : {
-          small: { cell: "px-2 py-1.5", name: "px-2 py-2" },
-          medium: { cell: "px-3 py-2", name: "px-3 py-2.5" },
-          large: { cell: "px-4 py-2.5", name: "px-4 py-3" },
-        };
+    const tier: "normal" | "compact" | "ultra" = compactLevel >= 67 ? "ultra" : compactLevel >= 34 ? "compact" : "normal";
 
-    const widths = compactMode
-      ? {
-          small: "w-16 max-w-16 min-w-16",
-          medium: "w-24 max-w-24 min-w-24",
-          large: "w-32 max-w-32 min-w-32",
-        }
-      : {
-          small: "w-24 max-w-24 min-w-24",
-          medium: "w-32 max-w-32 min-w-32",
-          large: "w-40 max-w-40 min-w-40",
-        };
+    const padding =
+      tier === "compact"
+        ? {
+            small: { cell: "px-0 py-0.5", name: "px-0 py-0.5" },
+            medium: { cell: "px-0 py-0.5", name: "px-0 py-0.5" },
+            large: { cell: "px-0.5 py-0.5", name: "px-0.5 py-0.5" },
+          }
+        : tier === "ultra"
+          ? {
+              small: { cell: "px-0 py-0", name: "px-0 py-0" },
+              medium: { cell: "px-0 py-0", name: "px-0 py-0" },
+              large: { cell: "px-0 py-0", name: "px-0 py-0" },
+            }
+          : {
+              small: { cell: "px-2 py-1.5", name: "px-2 py-2" },
+              medium: { cell: "px-3 py-2", name: "px-3 py-2.5" },
+              large: { cell: "px-4 py-2.5", name: "px-4 py-3" },
+            };
+
+    const widths =
+      tier === "compact"
+        ? {
+            small: "w-16 max-w-16 min-w-16",
+            medium: "w-24 max-w-24 min-w-24",
+            large: "w-32 max-w-32 min-w-32",
+          }
+        : tier === "ultra"
+          ? {
+              small: "w-12 max-w-12 min-w-12",
+              medium: "w-16 max-w-16 min-w-16",
+              large: "w-20 max-w-20 min-w-20",
+            }
+          : {
+              small: "w-24 max-w-24 min-w-24",
+              medium: "w-32 max-w-32 min-w-32",
+              large: "w-40 max-w-40 min-w-40",
+            };
 
     const map = {
       small: {
@@ -172,7 +192,12 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     } as const;
 
     return map[cellSize];
-  }, [cellSize, compactMode]);
+  }, [cellSize, compactLevel]);
+
+  const compactTier = React.useMemo(
+    () => (compactLevel >= 67 ? "ultra" : compactLevel >= 34 ? "compact" : "normal"),
+    [compactLevel],
+  );
 
   const renderTwoLineName = React.useCallback((raw: string) => {
     const name = raw.trim();
@@ -677,38 +702,58 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
               </div>
 
               {/* Row 2 */}
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="flex items-center gap-2 rounded-md border bg-card px-3 py-2">
-                  <Switch id="compactMode" checked={compactMode} onCheckedChange={setCompactMode} />
-                  <Label htmlFor="compactMode" className="text-sm">
-                    Compact
-                  </Label>
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-12 md:items-center">
+                <div className="md:col-span-5">
+                  <div className="rounded-md border bg-card px-3 py-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <Label className="text-sm">Compact</Label>
+                      <span className="text-xs text-muted-foreground">
+                        {compactTier === "normal" ? "Normal" : compactTier === "compact" ? "Compact" : "Ultra"}
+                      </span>
+                    </div>
+                    <div className="mt-2">
+                      <Slider
+                        value={[compactLevel]}
+                        min={0}
+                        max={100}
+                        step={1}
+                        onValueChange={(v) => setCompactLevel(v[0] ?? 0)}
+                        aria-label="Compact density"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <Select value={cellSize} onValueChange={(v) => setCellSize(v as "small" | "medium" | "large")}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Cell size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="small">Cell: Small</SelectItem>
-                    <SelectItem value="medium">Cell: Medium</SelectItem>
-                    <SelectItem value="large">Cell: Large</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="md:col-span-3">
+                  <Select value={cellSize} onValueChange={(v) => setCellSize(v as "small" | "medium" | "large")}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Cell size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="small">Cell: Small</SelectItem>
+                      <SelectItem value="medium">Cell: Medium</SelectItem>
+                      <SelectItem value="large">Cell: Large</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Select value={pdfPaper} onValueChange={(v) => setPdfPaper(v as "a4" | "letter")}>
-                  <SelectTrigger className="w-[110px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="a4">A4</SelectItem>
-                    <SelectItem value="letter">Letter</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="md:col-span-2">
+                  <Select value={pdfPaper} onValueChange={(v) => setPdfPaper(v as "a4" | "letter")}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="a4">A4</SelectItem>
+                      <SelectItem value="letter">Letter</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Button variant="outline" onClick={handleExportPdf} disabled={!!error || exporting || exportingPdf}>
-                  <Download className="mr-2 size-4" /> {exportingPdf ? "Exporting..." : "Export PDF"}
-                </Button>
+                <div className="md:col-span-2 md:justify-self-end">
+                  <Button variant="outline" onClick={handleExportPdf} disabled={!!error || exporting || exportingPdf}>
+                    <Download className="mr-2 size-4" /> {exportingPdf ? "Exporting..." : "Export PDF"}
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -777,7 +822,14 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                               cellSizeClass.name,
                             )}
                           >
-                            <div className="flex size-full flex-col items-center justify-center text-center leading-tight">
+                            <div
+                              className="flex size-full flex-col items-center justify-center text-center leading-tight"
+                              style={
+                                compactTier === "ultra"
+                                  ? ({ writingMode: "vertical-rl", textOrientation: "mixed" } as React.CSSProperties)
+                                  : undefined
+                              }
+                            >
                               {renderTwoLineName(name)}
                             </div>
                           </td>
@@ -851,7 +903,14 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                               cellSizeClass.name,
                             )}
                           >
-                            <div className="flex size-full flex-col items-center justify-center text-center leading-tight">
+                            <div
+                              className="flex size-full flex-col items-center justify-center text-center leading-tight"
+                              style={
+                                compactTier === "ultra"
+                                  ? ({ writingMode: "vertical-rl", textOrientation: "mixed" } as React.CSSProperties)
+                                  : undefined
+                              }
+                            >
                               {renderTwoLineName(name)}
                             </div>
                           </td>
