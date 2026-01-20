@@ -1,7 +1,7 @@
 import * as React from "react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
-import { Armchair, Download, LogOut, Pencil, Trash2, User, Users } from "lucide-react";
+import { Armchair, Download, Save, Trash2, Users, Pencil } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,15 +16,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import ProfileDialog from "@/components/ProfileDialog";
+import AccountMenu from "@/components/AccountMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useGuests } from "@/hooks/use-guests";
@@ -43,8 +35,8 @@ const defaultGuest: Omit<Guest, "id"> = {
   spousePosition: "N/A",
 };
 
-export default function SeatingPlannerPage() {
-  const { guests, loading, addGuest, updateGuest, deleteGuest } = useGuests();
+export default function SeatingPlannerPage({ projectId }: { projectId: string }) {
+  const { guests, loading, addGuest, updateGuest, deleteGuest } = useGuests(projectId);
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [title, setTitle] = React.useState("Seating Plan");
   const [exporting, setExporting] = React.useState(false);
@@ -54,41 +46,86 @@ export default function SeatingPlannerPage() {
   const [cellSize, setCellSize] = React.useState<"small" | "medium" | "large">("medium");
   const [compactMode, setCompactMode] = React.useState(false);
 
-  const [userId, setUserId] = React.useState<string | null>(null);
-  const [userEmail, setUserEmail] = React.useState<string | null>(null);
-  const [profileOpen, setProfileOpen] = React.useState(false);
+  const [projectLoading, setProjectLoading] = React.useState(true);
+  const [savingProject, setSavingProject] = React.useState(false);
+  const [saveStatus, setSaveStatus] = React.useState<"saved" | "saving" | "error">("saved");
 
+  const initialLoadRef = React.useRef(true);
+  const saveTimerRef = React.useRef<number | null>(null);
   React.useEffect(() => {
     let mounted = true;
 
-    supabase.auth
-      .getUser()
-      .then(({ data, error }) => {
+    const run = async () => {
+      setProjectLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("seating_projects")
+          .select("title, cell_size, compact_mode")
+          .eq("id", projectId)
+          .single();
+
         if (!mounted) return;
         if (error) throw error;
-        setUserId(data.user?.id ?? null);
-        setUserEmail(data.user?.email ?? null);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setUserId(null);
-        setUserEmail(null);
-      });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserId(session?.user?.id ?? null);
-      setUserEmail(session?.user?.email ?? null);
-    });
+        initialLoadRef.current = true;
+        setTitle(data.title ?? "Seating Plan");
+        setCellSize((data.cell_size as "small" | "medium" | "large") ?? "medium");
+        setCompactMode(Boolean(data.compact_mode));
+        setSaveStatus("saved");
+      } catch {
+        if (!mounted) return;
+        setSaveStatus("error");
+      } finally {
+        if (!mounted) return;
+        setProjectLoading(false);
+        initialLoadRef.current = false;
+      }
+    };
+
+    void run();
 
     return () => {
       mounted = false;
-      sub.subscription.unsubscribe();
     };
-  }, []);
+  }, [projectId]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-  };
+  const forceSaveProject = React.useCallback(async () => {
+    try {
+      setSavingProject(true);
+      setSaveStatus("saving");
+
+      const { error } = await supabase
+        .from("seating_projects")
+        .update({
+          title: title.trim() || "Seating Plan",
+          cell_size: cellSize,
+          compact_mode: compactMode,
+        })
+        .eq("id", projectId);
+
+      if (error) throw error;
+      setSaveStatus("saved");
+    } catch {
+      setSaveStatus("error");
+    } finally {
+      setSavingProject(false);
+    }
+  }, [cellSize, compactMode, projectId, title]);
+
+  React.useEffect(() => {
+    if (projectLoading) return;
+    if (initialLoadRef.current) return;
+
+    if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+
+    saveTimerRef.current = window.setTimeout(() => {
+      void forceSaveProject();
+    }, 500);
+
+    return () => {
+      if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
+    };
+  }, [cellSize, compactMode, forceSaveProject, projectLoading, title]);
 
   const planExportRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -351,31 +388,7 @@ export default function SeatingPlannerPage() {
               <p className="text-sm text-muted-foreground">Guests → arrangement → seating plan preview.</p>
             </div>
           </div>
-
-          {userId ? (
-            <>
-              <ProfileDialog open={profileOpen} onOpenChange={setProfileOpen} userId={userId} email={userEmail} />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <User className="mr-2 size-4" />
-                    <span className="max-w-[220px] truncate">{userEmail ?? "Account"}</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-64">
-                  <DropdownMenuLabel className="truncate">{userEmail ?? "Account"}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={() => setProfileOpen(true)}>
-                    <Pencil className="mr-2 size-4" /> Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onSelect={handleSignOut}>
-                    <LogOut className="mr-2 size-4" /> Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </>
-          ) : null}
+          <AccountMenu />
         </div>
       </header>
 
@@ -629,8 +642,16 @@ export default function SeatingPlannerPage() {
                 <Label htmlFor="planTitle">Enter the title</Label>
                 <Input id="planTitle" value={title} onChange={(e) => setTitle(e.target.value)} />
               </div>
-
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <Button variant="outline" onClick={forceSaveProject} disabled={projectLoading || savingProject}>
+                  <Save className="mr-2 size-4" />
+                  {saveStatus === "saving" || savingProject
+                    ? "Saving…"
+                    : saveStatus === "error"
+                      ? "Retry save"
+                      : "Saved"}
+                </Button>
+
                 <Button variant="outline" onClick={handleSaveAsImage} disabled={!!error || exporting || exportingPdf}>
                   <Download /> {exporting ? "Saving..." : "Save as image"}
                 </Button>
