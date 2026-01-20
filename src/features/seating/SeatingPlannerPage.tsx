@@ -721,14 +721,11 @@ export default function SeatingPlannerPage() {
                       <tr>
                         {serialNumbers.map((n, i) => {
                           const isChief = chiefIndex === i;
-                          const isSpouseSeat = arrangement[i]?.startsWith("Spouse of ") ?? false;
 
                           return (
                             <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
                               {isChief ? (
                                 <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
-                              ) : isSpouseSeat ? (
-                                ""
                               ) : n === 0 ? (
                                 ""
                               ) : (
@@ -792,14 +789,11 @@ export default function SeatingPlannerPage() {
                       <tr>
                         {serialNumbers.map((n, i) => {
                           const isChief = chiefIndex === i;
-                          const isSpouseSeat = arrangement[i]?.startsWith("Spouse of ") ?? false;
 
                           return (
                             <td key={i} className={cn("border text-center tabular-nums align-middle", cellSizeClass.cell)}>
                               {isChief ? (
                                 <Armchair className="mx-auto size-4 text-primary" aria-label="Royal chair" />
-                              ) : isSpouseSeat ? (
-                                ""
                               ) : n === 0 ? (
                                 ""
                               ) : (
