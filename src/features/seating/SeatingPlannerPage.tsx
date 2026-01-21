@@ -440,7 +440,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
       .tag {
         border: 1px solid #000;
         padding: 4mm 6mm;
-        border-radius: 3mm;
+        border-radius: 0;
         font-size: ${fontSize}px;
         line-height: 1.1;
         white-space: nowrap;
@@ -474,18 +474,26 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
   </body>
 </html>`;
 
-    const win = window.open("", "_blank");
-    if (!win) {
+    try {
+      const win = window.open("about:blank", "_blank");
+      if (!win) {
+        toast({
+          title: "Pop-up blocked",
+          description: "Allow pop-ups for this site, then click Print again to open the tags page.",
+        });
+        return;
+      }
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+    } catch (e) {
+      console.error("Failed to open print tags window", e);
       toast({
-        title: "Pop-up blocked",
-        description: "Allow pop-ups for this site, then click Print again to open the tags page.",
+        title: "Print failed",
+        description: "Couldn't open the tags page. Please try again (and ensure pop-ups are allowed).",
       });
-      return;
     }
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
-    win.focus();
   }, [tagNames, tagsFontSize]);
 
   // Note: Print preview control intentionally omitted from the UI per request.
@@ -1019,18 +1027,18 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           <td
                             key={i}
                             className={cn(
-                              "border align-middle",
+                              "border",
                               compactTier === "ultra"
-                                ? "whitespace-nowrap break-normal overflow-visible"
+                                ? "align-top whitespace-nowrap break-normal overflow-visible"
                                 : "whitespace-normal break-words",
                               cellSizeClass.name,
-                              rowHeightClass,
-                              compactTier === "ultra" ? "h-auto min-h-0" : null,
+                              compactTier === "ultra" ? "h-auto min-h-0" : rowHeightClass,
                             )}
                           >
                             <div
                               className={cn(
-                                "size-full text-center",
+                                "text-center",
+                                compactTier === "ultra" ? "w-full" : "size-full",
                                 compactTier === "ultra"
                                   ? // In ultra mode, avoid vertical centering which creates visible top/bottom gaps.
                                     // Keep it tight and pinned to the start.
@@ -1112,18 +1120,18 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           <td
                             key={i}
                             className={cn(
-                              "border align-middle",
+                              "border",
                               compactTier === "ultra"
-                                ? "whitespace-nowrap break-normal overflow-visible"
+                                ? "align-top whitespace-nowrap break-normal overflow-visible"
                                 : "whitespace-normal break-words",
                               cellSizeClass.name,
-                              rowHeightClass,
-                              compactTier === "ultra" ? "h-auto min-h-0" : null,
+                              compactTier === "ultra" ? "h-auto min-h-0" : rowHeightClass,
                             )}
                           >
                             <div
                               className={cn(
-                                "size-full text-center",
+                                "text-center",
+                                compactTier === "ultra" ? "w-full" : "size-full",
                                 compactTier === "ultra"
                                   ? "flex items-center justify-start leading-none px-[3px] py-[3px]"
                                   : "flex flex-col items-center justify-center leading-tight",
