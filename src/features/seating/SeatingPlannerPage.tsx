@@ -220,6 +220,10 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     [compactLevel],
   );
 
+  // Extra ultra-control: beyond a second threshold we flip the text 180°
+  // so it reads from the opposite side.
+  const ultraTextRotationDeg = React.useMemo<number>(() => (compactLevel >= 92 ? 180 : 0), [compactLevel]);
+
   const rowHeightClass = React.useMemo(() => {
     const heights =
       rowHeight === "compact"
@@ -1047,7 +1051,12 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                               )}
                               style={
                                 compactTier === "ultra"
-                                  ? ({ writingMode: ultraWritingMode, textOrientation: "mixed" } as React.CSSProperties)
+                                  ? ({
+                                      writingMode: ultraWritingMode,
+                                      textOrientation: "mixed",
+                                      transform: ultraTextRotationDeg ? `rotate(${ultraTextRotationDeg}deg)` : undefined,
+                                      transformOrigin: "center",
+                                    } as React.CSSProperties)
                                   : undefined
                               }
                             >
@@ -1138,7 +1147,12 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                               )}
                               style={
                                 compactTier === "ultra"
-                                  ? ({ writingMode: ultraWritingMode, textOrientation: "mixed" } as React.CSSProperties)
+                                  ? ({
+                                      writingMode: ultraWritingMode,
+                                      textOrientation: "mixed",
+                                      transform: ultraTextRotationDeg ? `rotate(${ultraTextRotationDeg}deg)` : undefined,
+                                      transformOrigin: "center",
+                                    } as React.CSSProperties)
                                   : undefined
                               }
                             >
