@@ -29,6 +29,7 @@ import AccountMenu from "@/components/AccountMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useGuests } from "@/hooks/use-guests";
+import { toast } from "@/hooks/use-toast";
 
 import type { Guest, GuestRole, SpousePosition } from "./types";
 import { buildArrangement, computeSerialNumbers } from "./seatingLogic";
@@ -473,8 +474,14 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
   </body>
 </html>`;
 
-    const win = window.open("", "_blank", "noopener,noreferrer");
-    if (!win) return;
+    const win = window.open("", "_blank");
+    if (!win) {
+      toast({
+        title: "Pop-up blocked",
+        description: "Allow pop-ups for this site, then click Print again to open the tags page.",
+      });
+      return;
+    }
     win.document.open();
     win.document.write(html);
     win.document.close();
@@ -1014,10 +1021,11 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                             className={cn(
                               "border align-middle",
                               compactTier === "ultra"
-                                ? "whitespace-nowrap break-normal overflow-hidden"
+                                ? "whitespace-nowrap break-normal overflow-visible"
                                 : "whitespace-normal break-words",
                               cellSizeClass.name,
                               rowHeightClass,
+                              compactTier === "ultra" ? "h-auto min-h-0" : null,
                             )}
                           >
                             <div
@@ -1106,10 +1114,11 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                             className={cn(
                               "border align-middle",
                               compactTier === "ultra"
-                                ? "whitespace-nowrap break-normal overflow-hidden"
+                                ? "whitespace-nowrap break-normal overflow-visible"
                                 : "whitespace-normal break-words",
                               cellSizeClass.name,
                               rowHeightClass,
+                              compactTier === "ultra" ? "h-auto min-h-0" : null,
                             )}
                           >
                             <div
