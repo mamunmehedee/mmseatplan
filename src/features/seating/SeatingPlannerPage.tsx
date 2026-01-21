@@ -212,6 +212,13 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     [compactLevel],
   );
 
+  // In Ultra mode we render vertically. Allow users to flip the vertical direction
+  // using the same density slider (higher = alternate direction).
+  const ultraWritingMode = React.useMemo<"vertical-rl" | "vertical-lr">(
+    () => (compactLevel >= 84 ? "vertical-lr" : "vertical-rl"),
+    [compactLevel],
+  );
+
   const rowHeightClass = React.useMemo(() => {
     const heights =
       rowHeight === "compact"
@@ -1005,7 +1012,10 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           <td
                             key={i}
                             className={cn(
-                              "border align-middle whitespace-normal break-words",
+                              "border align-middle",
+                              compactTier === "ultra"
+                                ? "whitespace-nowrap break-normal overflow-hidden"
+                                : "whitespace-normal break-words",
                               cellSizeClass.name,
                               rowHeightClass,
                             )}
@@ -1016,16 +1026,16 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                                 compactTier === "ultra"
                                   ? // In ultra mode, avoid vertical centering which creates visible top/bottom gaps.
                                     // Keep it tight and pinned to the start.
-                                    "flex items-center justify-start leading-none"
+                                    "flex items-center justify-start leading-none px-[3px] py-[3px]"
                                   : "flex flex-col items-center justify-center leading-tight",
                               )}
                               style={
                                 compactTier === "ultra"
-                                  ? ({ writingMode: "vertical-rl", textOrientation: "mixed" } as React.CSSProperties)
+                                  ? ({ writingMode: ultraWritingMode, textOrientation: "mixed" } as React.CSSProperties)
                                   : undefined
                               }
                             >
-                              {renderTwoLineName(name)}
+                              {compactTier === "ultra" ? name : renderTwoLineName(name)}
                             </div>
                           </td>
                         ))}
@@ -1094,7 +1104,10 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                           <td
                             key={i}
                             className={cn(
-                              "border align-middle whitespace-normal break-words",
+                              "border align-middle",
+                              compactTier === "ultra"
+                                ? "whitespace-nowrap break-normal overflow-hidden"
+                                : "whitespace-normal break-words",
                               cellSizeClass.name,
                               rowHeightClass,
                             )}
@@ -1103,16 +1116,16 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                               className={cn(
                                 "size-full text-center",
                                 compactTier === "ultra"
-                                  ? "flex items-center justify-start leading-none"
+                                  ? "flex items-center justify-start leading-none px-[3px] py-[3px]"
                                   : "flex flex-col items-center justify-center leading-tight",
                               )}
                               style={
                                 compactTier === "ultra"
-                                  ? ({ writingMode: "vertical-rl", textOrientation: "mixed" } as React.CSSProperties)
+                                  ? ({ writingMode: ultraWritingMode, textOrientation: "mixed" } as React.CSSProperties)
                                   : undefined
                               }
                             >
-                              {renderTwoLineName(name)}
+                              {compactTier === "ultra" ? name : renderTwoLineName(name)}
                             </div>
                           </td>
                         ))}
