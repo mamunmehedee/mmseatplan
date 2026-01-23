@@ -623,24 +623,36 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
             <CardDescription>Exactly one “Chief Guest” is required for the plan.</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-5" onSubmit={onSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="name">Name/Appt</Label>
+            <form className="space-y-3" onSubmit={onSubmit}>
+              <div className="space-y-1">
+                <Label className="text-xs" htmlFor="name">
+                  Name/Appt
+                </Label>
                 <Input
                   id="name"
                   value={form.name}
                   onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                   required
+                  className="h-9"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="bdNo">BD No</Label>
-                  <Input id="bdNo" value={form.bdNo} onChange={(e) => setForm((p) => ({ ...p, bdNo: e.target.value }))} />
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs" htmlFor="bdNo">
+                    BD No
+                  </Label>
+                  <Input
+                    id="bdNo"
+                    value={form.bdNo}
+                    onChange={(e) => setForm((p) => ({ ...p, bdNo: e.target.value }))}
+                    className="h-9"
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="gradationNo">Gradation No</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs" htmlFor="gradationNo">
+                    Gradation No
+                  </Label>
                   <Input
                     id="gradationNo"
                     type="number"
@@ -652,23 +664,14 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                       }))
                     }
                     required={form.role === "Regular" || form.role === "Chief Guest"}
+                    className="h-9"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="dateCommission">Date of Commission (optional)</Label>
-                <Input
-                  id="dateCommission"
-                  type="date"
-                  value={form.dateCommission ?? ""}
-                  onChange={(e) => setForm((p) => ({ ...p, dateCommission: e.target.value }))}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label>Role</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">Role</Label>
                   <Select
                     value={form.role}
                     onValueChange={(v) =>
@@ -680,7 +683,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                       }))
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9">
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent>
@@ -691,13 +694,13 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                   </Select>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Spouse position</Label>
+                <div className="space-y-1">
+                  <Label className="text-xs">Spouse position</Label>
                   <Select
                     value={form.spousePosition}
                     onValueChange={(v) => setForm((p) => ({ ...p, spousePosition: v as SpousePosition }))}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9">
                       <SelectValue placeholder="Spouse" />
                     </SelectTrigger>
                     <SelectContent>
@@ -709,16 +712,29 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                 </div>
               </div>
 
+              <div className="space-y-1">
+                <Label className="text-xs" htmlFor="dateCommission">
+                  Date of Commission (optional)
+                </Label>
+                <Input
+                  id="dateCommission"
+                  type="date"
+                  value={form.dateCommission ?? ""}
+                  onChange={(e) => setForm((p) => ({ ...p, dateCommission: e.target.value }))}
+                  className="h-9"
+                />
+              </div>
+
               {form.role === "Custom" ? (
-                <div className="rounded-lg border bg-card p-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-2">
-                      <Label>Place</Label>
+                <div className="rounded-lg border bg-card p-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Place</Label>
                       <Select
                         value={form.beforeAfter ?? "Before"}
                         onValueChange={(v) => setForm((p) => ({ ...p, beforeAfter: v as "Before" | "After" }))}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -728,13 +744,13 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label>Relative to</Label>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Relative to</Label>
                       <Select
                         value={form.referenceId ?? "none"}
                         onValueChange={(v) => setForm((p) => ({ ...p, referenceId: v === "none" ? undefined : v }))}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="h-9">
                           <SelectValue placeholder="(optional)" />
                         </SelectTrigger>
                         <SelectContent>
@@ -749,7 +765,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                     </div>
                   </div>
 
-                  <p className="mt-3 text-xs text-muted-foreground">
+                  <p className="mt-2 text-xs text-muted-foreground">
                     If “Relative to” is empty, custom guests are placed at the ends (alternating).
                   </p>
                 </div>
