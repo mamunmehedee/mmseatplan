@@ -247,6 +247,31 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     return heights[cellSize];
   }, [cellSize, rowHeight]);
 
+  // For the guest-name row we want the row height selector to act as a *minimum* height,
+  // but still allow the cell to grow to fit long names (prevents text spilling past borders).
+  const nameRowMinHeightClass = React.useMemo(() => {
+    const heights =
+      rowHeight === "compact"
+        ? {
+            small: "min-h-12",
+            medium: "min-h-14",
+            large: "min-h-16",
+          }
+        : rowHeight === "ultra"
+          ? {
+              small: "min-h-10",
+              medium: "min-h-11",
+              large: "min-h-12",
+            }
+          : {
+              small: "min-h-16",
+              medium: "min-h-20",
+              large: "min-h-24",
+            };
+
+    return heights[cellSize];
+  }, [cellSize, rowHeight]);
+
   const renderTwoLineName = React.useCallback((raw: string) => {
     const name = raw.trim();
     if (!name) return null;
@@ -1037,7 +1062,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                                 ? "align-top whitespace-nowrap break-normal overflow-visible"
                                 : "whitespace-normal break-words",
                               cellSizeClass.name,
-                              compactTier === "ultra" ? "h-auto min-h-0" : rowHeightClass,
+                              compactTier === "ultra" ? "h-auto min-h-0" : cn("h-auto", nameRowMinHeightClass),
                             )}
                           >
                             <div
@@ -1135,7 +1160,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                                 ? "align-top whitespace-nowrap break-normal overflow-visible"
                                 : "whitespace-normal break-words",
                               cellSizeClass.name,
-                              compactTier === "ultra" ? "h-auto min-h-0" : rowHeightClass,
+                              compactTier === "ultra" ? "h-auto min-h-0" : cn("h-auto", nameRowMinHeightClass),
                             )}
                           >
                             <div
