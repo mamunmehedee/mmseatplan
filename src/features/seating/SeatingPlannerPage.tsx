@@ -590,7 +590,8 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
       </header>
 
       <main className="px-6 py-8 space-y-6">
-        <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[420px_1fr]">
+        {/* Full-width Guest + Guests list section (no max-width container) */}
+        <div className="grid w-full gap-6 lg:grid-cols-[420px_1fr]">
         <Card>
           <CardHeader>
             <CardTitle>{editingId ? "Edit guest" : "Add guest"}</CardTitle>
