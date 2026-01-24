@@ -32,7 +32,7 @@ function DashboardInner() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-background">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-6">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
           <div className="flex items-center gap-3">
             <div className="grid size-10 place-items-center rounded-md bg-primary text-primary-foreground">
               <LayoutGrid className="size-5" />
@@ -47,7 +47,7 @@ function DashboardInner() {
         </div>
       </header>
 
-      <main className="px-6 py-8">
+      <main className="px-4 py-6 sm:px-6 sm:py-8">
         <div className="mx-auto max-w-6xl space-y-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Button onClick={handleCreate} disabled={creating}>
