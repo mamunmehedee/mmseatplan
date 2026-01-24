@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { toPng } from "html-to-image";
+import { toJpeg, toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import { Armchair, ArrowLeft, Download, Save, Trash2, Users, Pencil, Printer } from "lucide-react";
 
@@ -50,6 +50,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
   const [editingId, setEditingId] = React.useState<string | null>(null);
   const [title, setTitle] = React.useState("Seating Plan");
   const [exporting, setExporting] = React.useState(false);
+  const [exportingJpg, setExportingJpg] = React.useState(false);
   const [exportingPdf, setExportingPdf] = React.useState(false);
   const [pdfPaper, setPdfPaper] = React.useState<"a4" | "letter">("a4");
   // Margin selector intentionally omitted from the UI per request; keep a fixed default margin.
@@ -378,6 +379,30 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     }
   };
 
+  const handleSaveAsJpg = async () => {
+    if (!planExportRef.current) return;
+
+    try {
+      setExportingJpg(true);
+      const dataUrl = await toJpeg(planExportRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        quality: 0.9,
+        backgroundColor: "hsl(var(--background))",
+        skipFonts: true,
+      });
+
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = `${(title || "Seating Plan").trim().replace(/\s+/g, " ")}.jpg`;
+      a.click();
+    } catch (e) {
+      console.error("Failed to export JPG", e);
+    } finally {
+      setExportingJpg(false);
+    }
+  };
+
   const handleExportPdf = async () => {
     if (!planExportRef.current) return;
 
@@ -592,7 +617,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b bg-background">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-6">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
           <div className="flex items-center gap-3">
             <div className="grid size-10 place-items-center rounded-md bg-primary text-primary-foreground">
               <Users className="size-5" />
@@ -603,18 +628,20 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="outline" asChild>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <Button variant="outline" asChild className="w-full sm:w-auto">
               <Link to="/dashboard">
                 <ArrowLeft className="mr-2 size-4" /> Back to Saved Seat Plans
               </Link>
             </Button>
-            <AccountMenu />
+            <div className="self-start sm:self-auto">
+              <AccountMenu />
+            </div>
           </div>
         </div>
       </header>
 
-      <main className="px-6 py-8 space-y-6">
+      <main className="space-y-6 px-4 py-6 sm:px-6 sm:py-8">
         {/* Full-width Guest + Guests list section (no max-width container) */}
         <div className="grid w-full gap-6">
         <Card>
@@ -897,9 +924,17 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                   <Button
                     variant="outline"
                     onClick={handleSaveAsImage}
-                    disabled={!!error || exporting || exportingPdf}
+                    disabled={!!error || exporting || exportingJpg || exportingPdf}
                   >
                     <Download className="mr-2 size-4" /> {exporting ? "Saving..." : "Save as image"}
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={handleSaveAsJpg}
+                    disabled={!!error || exporting || exportingJpg || exportingPdf}
+                  >
+                    <Download className="mr-2 size-4" /> {exportingJpg ? "Saving..." : "Save as JPG"}
                   </Button>
 
                   <Dialog>
