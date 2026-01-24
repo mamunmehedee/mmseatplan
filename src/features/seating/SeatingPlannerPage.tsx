@@ -25,6 +25,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import AccountMenu from "@/components/AccountMenu";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -62,6 +68,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
   // Per-row height (vertical density) without changing widths.
   const [rowHeight, setRowHeight] = React.useState<"normal" | "compact" | "ultra">("normal");
   const [tagsFontSize, setTagsFontSize] = React.useState<number>(16);
+  const [tagsBorderPx, setTagsBorderPx] = React.useState<number>(1);
 
   const [projectLoading, setProjectLoading] = React.useState(true);
   const [savingProject, setSavingProject] = React.useState(false);
@@ -455,6 +462,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
     if (tagNames.length === 0) return;
 
     const fontSize = Number.isFinite(tagsFontSize) ? Math.max(6, Math.min(72, tagsFontSize)) : 16;
+    const borderPx = Number.isFinite(tagsBorderPx) ? Math.max(1, Math.min(12, tagsBorderPx)) : 1;
 
     const html = `<!doctype html>
 <html>
@@ -492,7 +500,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
       }
       .wrap { display: flex; flex-wrap: wrap; gap: 8mm; align-items: flex-start; }
       .tag {
-        border: 1px solid #000;
+        border: ${borderPx}px solid #000;
         padding: 4mm 6mm;
         border-radius: 0;
         font-size: ${fontSize}px;
@@ -509,7 +517,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
       <div class="toolbar-inner">
         <div>
           <div>Guest name tags</div>
-          <div class="meta">Tags: ${tagNames.length} • Font: ${fontSize}px • Tip: use Landscape if needed</div>
+          <div class="meta">Tags: ${tagNames.length} • Font: ${fontSize}px • Border: ${borderPx}px • Tip: use Landscape if needed</div>
         </div>
         <button class="btn" onclick="window.print()">Print</button>
       </div>
@@ -548,7 +556,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
         description: "Couldn't open the tags page. Please try again (and ensure pop-ups are allowed).",
       });
     }
-  }, [tagNames, tagsFontSize]);
+  }, [tagNames, tagsFontSize, tagsBorderPx]);
 
   // Note: Print preview control intentionally omitted from the UI per request.
 
@@ -921,21 +929,28 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                         : "Saved"}
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    onClick={handleSaveAsImage}
-                    disabled={!!error || exporting || exportingJpg || exportingPdf}
-                  >
-                    <Download className="mr-2 size-4" /> {exporting ? "Saving..." : "Save as image"}
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    onClick={handleSaveAsJpg}
-                    disabled={!!error || exporting || exportingJpg || exportingPdf}
-                  >
-                    <Download className="mr-2 size-4" /> {exportingJpg ? "Saving..." : "Save as JPG"}
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" disabled={!!error || exporting || exportingJpg || exportingPdf}>
+                        <Download className="mr-2 size-4" />
+                        {exporting || exportingJpg ? "Saving..." : "Save as image"}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={handleSaveAsImage}
+                        disabled={!!error || exporting || exportingJpg || exportingPdf}
+                      >
+                        Save as PNG
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={handleSaveAsJpg}
+                        disabled={!!error || exporting || exportingJpg || exportingPdf}
+                      >
+                        Save as JPG
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   <Dialog>
                     <DialogTrigger asChild>
@@ -961,6 +976,18 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                             max={72}
                             value={tagsFontSize}
                             onChange={(e) => setTagsFontSize(Number(e.target.value))}
+                          />
+                        </div>
+
+                        <div className="grid gap-2">
+                          <Label htmlFor="tagsBorder">Border thickness (px)</Label>
+                          <Input
+                            id="tagsBorder"
+                            type="number"
+                            min={1}
+                            max={12}
+                            value={tagsBorderPx}
+                            onChange={(e) => setTagsBorderPx(Number(e.target.value))}
                           />
                         </div>
 
