@@ -672,7 +672,8 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              {/* Options row: keep in one line on large screens; wrap on smaller devices */}
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
                 <div className="space-y-1">
                   <Label className="text-xs" htmlFor="bdNo">
                     BD No
@@ -684,6 +685,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                     className="h-9"
                   />
                 </div>
+
                 <div className="space-y-1">
                   <Label className="text-xs" htmlFor="gradationNo">
                     Gradation No
@@ -702,9 +704,7 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                     className="h-9"
                   />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
                   <Label className="text-xs">Role</Label>
                   <Select
@@ -745,19 +745,19 @@ export default function SeatingPlannerPage({ projectId }: { projectId: string })
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
 
-              <div className="space-y-1">
-                <Label className="text-xs" htmlFor="dateCommission">
-                  Date of Commission (optional)
-                </Label>
-                <Input
-                  id="dateCommission"
-                  type="date"
-                  value={form.dateCommission ?? ""}
-                  onChange={(e) => setForm((p) => ({ ...p, dateCommission: e.target.value }))}
-                  className="h-9"
-                />
+                <div className="space-y-1">
+                  <Label className="text-xs" htmlFor="dateCommission">
+                    Date of Commission
+                  </Label>
+                  <Input
+                    id="dateCommission"
+                    type="date"
+                    value={form.dateCommission ?? ""}
+                    onChange={(e) => setForm((p) => ({ ...p, dateCommission: e.target.value }))}
+                    className="h-9"
+                  />
+                </div>
               </div>
 
               {form.role === "Custom" ? (
